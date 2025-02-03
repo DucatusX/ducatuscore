@@ -15,36 +15,25 @@
 
 ## Installation
 
-- ```
-  yarn install
-  ```
-- ```
-  yarn compile
-  ```
+- ```yarn install```
+- ```yarn compile```
 
 ## Development
 
-- ```
-  yarn dev:node
-  ```
-- ```
-  yarn dev:dws
-  ```
+- ```yarn dev:node```
+- ```yarn dev:dws```
 
 ## Usage on the server
 
-- ```
-  make start
-  ```
-- ```
-  make stop
-  ```
-- ```
-  make logs-node
-  ```
-- ```
-  make logs-dws
-  ```
+- ```make start```
+- ```make stop```
+- ```make logs-node```
+- ```make logs-dws```
+
+## NPM publish
+
+- For authentication: ```npm set "//registry.npmjs.org/:_authToken=$NPM_TOKEN"```
+- For publish: ```yarn lerna:publish```
 
 ## Troubleshooting
 
