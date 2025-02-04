@@ -298,7 +298,7 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
             logger.info(
               `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
                 .toFixed(2)
-                .padStart(8)} blocks/min | Height: ${currentHeight.toString().padStart(7)}`
+                .padStart(8)} blocks/min | Height: ${currentHeight}`
             );
             lastLog = now;
           }

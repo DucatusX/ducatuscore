@@ -90,12 +90,22 @@ export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
         }
       });
       this.blockSubscription = await this.web3!.eth.subscribe('newBlockHeaders');
-      this.blockSubscription.subscribe((_err, block) => {
-        this.events.emit('block', block);
-        if (!this.syncing) {
-          this.sync();
-        }
-      });
+      if (this.chain === 'BNB') {
+        const blockUpdateTime = 3000
+        setInterval(() => {
+          if (!this.syncing) {
+            this.sync();
+          }
+        }, blockUpdateTime)
+      } else {
+        this.blockSubscription.subscribe((err, block) => {
+          if (err) logger.error(err);
+          this.events.emit('block', block);
+          if (!this.syncing) {
+            this.sync();
+          }
+        });
+      }
     });
 
     this.multiThreadSync.once('INITIALSYNCDONE', () => {
@@ -313,7 +323,7 @@ export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
           logger.info(
             `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
               .toFixed(2)
-              .padStart(8)} blocks/min | Height: ${currentHeight.toString().padStart(7)}`
+              .padStart(8)} blocks/min | Height: ${currentHeight} | Remained blocks: ${Math.max(bestBlock - currentHeight, 0)}`
           );
           lastLog = Date.now();
         }
