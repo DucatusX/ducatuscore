@@ -74,6 +74,13 @@ export class ExpressApp {
       })
     );
 
+    const urlDecode = (req, res, next) => {
+      req.url = decodeURI(req.url)
+      next()
+    }
+
+    this.app.use(urlDecode)
+
     this.app.use((req, res, next) => {
       if (config.maintenanceOpts.maintenanceMode === true) {
         let errorCode = 503;
