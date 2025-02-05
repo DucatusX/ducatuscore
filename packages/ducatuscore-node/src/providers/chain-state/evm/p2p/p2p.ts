@@ -90,22 +90,13 @@ export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
         }
       });
       this.blockSubscription = await this.web3!.eth.subscribe('newBlockHeaders');
-      if (this.chain === 'BNB') {
-        const blockUpdateTime = 3000
-        setInterval(() => {
-          if (!this.syncing) {
-            this.sync();
-          }
-        }, blockUpdateTime)
-      } else {
-        this.blockSubscription.subscribe((err, block) => {
-          if (err) logger.error(err);
-          this.events.emit('block', block);
-          if (!this.syncing) {
-            this.sync();
-          }
-        });
-      }
+      this.blockSubscription.subscribe((err, block) => {
+        if (err) logger.error(err);
+        this.events.emit('block', block);
+        if (!this.syncing) {
+          this.sync();
+        }
+      });
     });
 
     this.multiThreadSync.once('INITIALSYNCDONE', () => {
