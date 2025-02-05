@@ -84,9 +84,7 @@ export class MultiThreadSync extends EventEmitter {
       this.syncInterval = setInterval(() => {
         if (this.resolvingGaps) {
           logger.info(
-            `${timestamp()} | Filling gaps... | Chain: ${chain} | Network: ${network} | On gap ${this.gapsLength -
-              this.syncQueue.length} of ${this.gapsLength} | Height: ${
-              this.syncQueue[0] ? this.syncQueue[0].toString().padStart(7) : this.syncHeight
+            `${timestamp()} | Filling gaps... | Chain: ${chain} | Network: ${network} | On gap ${this.gapsLength - this.syncQueue.length} of ${this.gapsLength} | Height: ${this.syncQueue[0] || this.syncHeight
             }`
           );
         } else {
@@ -95,7 +93,7 @@ export class MultiThreadSync extends EventEmitter {
           logger.info(
             `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} | ${(blocksProcessed / elapsedMinutes)
               .toFixed(2)
-              .padStart(8)} blocks/min | Height: ${this.currentHeight.toString().padStart(7)}`
+              .padStart(8)} blocks/min | Height: ${this.currentHeight} | Remained blocks: ${Math.max(this.bestBlock - this.currentHeight, 0)}`
           );
         }
       }, oneSecond);
