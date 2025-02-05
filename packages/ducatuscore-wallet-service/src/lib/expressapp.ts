@@ -14,7 +14,6 @@ const bodyParser = require('body-parser');
 const compression = require('compression');
 const config = require('../config');
 const RateLimit = require('express-rate-limit');
-const rp = require('request-promise-native');
 const Defaults = Common.Defaults;
 
 export class ExpressApp {
@@ -75,7 +74,7 @@ export class ExpressApp {
     );
 
     const urlDecode = (req, res, next) => {
-      req.url = decodeURI(req.url)
+      req.url = decodeURIComponent(req.url)
       next()
     }
 
