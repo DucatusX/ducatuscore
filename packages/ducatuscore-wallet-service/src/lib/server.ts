@@ -49,7 +49,6 @@ const Ducatuscore_ = {
   ducx: Ducatuscore,
   bnb: Ducatuscore,
   duc: require('@ducatus/ducatuscore-lib-duc'),
-  
 };
 
 const Utils = Common.Utils;
@@ -411,7 +410,7 @@ export class WalletService implements IWalletService {
         message += ' %o';
       }
     }
-  
+
     if (!this || !this.walletId) {
       return logger.warn(message, ...args);
     }
@@ -2877,10 +2876,10 @@ export class WalletService implements IWalletService {
                 if (t.id !== txp.id && t.nonce <= txp.nonce && t.status !== 'rejected') {
                   return cb(Errors.TX_NONCE_CONFLICT);
                 }
-              }  
+              }
             } catch (err) {
               return cb(err);
-            }            
+            }
           }
 
           const copayer = wallet.getCopayer(this.copayerId);
@@ -3377,7 +3376,7 @@ export class WalletService implements IWalletService {
             case 'receive':
               ret.action = 'received';
               ret.outputs = tx.outputs;
-              ret.amount = Math.abs(_.sumBy(tx.outputs, 'amount')) || Math.abs(tx.satoshis);
+              ret.amount = Math.abs(_.sumBy(tx.effects, 'amount')) || Math.abs(tx.satoshis);
               ret.dust = ret.amount < dustThreshold;
               break;
             case 'move':

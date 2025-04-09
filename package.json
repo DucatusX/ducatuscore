@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev:node": "cd packages/ducatuscore-node && env-cmd -f ../../.env tsc-watch --onSuccess 'node --inspect build/src/server.js'",
-    "dev:dws": "cd packages/ducatuscore-wallet-service && env-cmd -f ../../.env tsc-watch --onSuccess 'node --inspect=localhost:9222 ts_build/app.js'",
+    "dev:dws": "cd packages/ducatuscore-wallet-service && env-cmd -f ../../.env tsc-watch --onSuccess 'node --inspect=localhost:9222 --experimental-network-inspection ts_build/app.js'",
     "postinstall": "patch-package",
     "compile": "lerna run compile",
     "lint": "lerna run lint",
