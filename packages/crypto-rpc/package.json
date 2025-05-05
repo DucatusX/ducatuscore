@@ -1,6 +1,6 @@
 {
   "name": "@ducatus/crypto-rpc",
-  "version": "10.1.11",
+  "version": "10.1.12",
   "description": "rpc wrapper for multiple rpcs",
   "license": "ISC",
   "main": "index.js",
