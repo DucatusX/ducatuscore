@@ -1,4 +1,4 @@
-import { Transactions, Validation } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation, Web3 } from '@ducatus/ducatuscore-crypto';
 import _ from 'lodash';
 import { IAddress } from 'src/lib/model/address';
 import { IChain, INotificationData } from '..';
@@ -203,10 +203,20 @@ export class XrpChain implements IChain {
   checkUtxos(opts) {}
 
   checkValidTxAmount(output): boolean {
-    if (!_.isNumber(output.amount) || _.isNaN(output.amount) || output.amount < 0) {
+    try {
+      if (
+        output.amount == null ||
+        output.amount < 0 ||
+        isNaN(output.amount) ||
+        Web3.utils.toBN(output.amount).toString() !== output.amount.toString()
+      ) {
+        throw new Error('output.amount is not a valid value: ' + output.amount);
+      }
+      return true;
+    } catch (err) {
+      logger.warn(`Invalid output amount (${output.amount}) in checkValidTxAmount: $o`, err);
       return false;
     }
-    return true;
   }
 
   isUTXOChain() {
