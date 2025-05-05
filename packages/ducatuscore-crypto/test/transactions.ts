@@ -425,13 +425,16 @@ describe('Transaction Creation', () => {
     };
     const rawEthTx = {
       value: 3896000000000000,
-      to: '0xf514e00E20373f6366C9AF966fF5F8be587595E9',
+      to: '0xf514e00E20373f6366C9AF966fF5F8be587595E9'
     };
     const rawEthTx2 = {
       value: 20407919369583210,
-      to: '0x3428F3Eb7df7D4a16f9e4A5098574Cea2CFBbdc6',
-    }
-    const recipients = [{ address: rawEthTx.to, amount: rawEthTx.value }, { address: rawEthTx2.to, amount: rawEthTx2.value }];
+      to: '0x3428F3Eb7df7D4a16f9e4A5098574Cea2CFBbdc6'
+    };
+    const recipients = [
+      { address: rawEthTx.to, amount: rawEthTx.value },
+      { address: rawEthTx2.to, amount: rawEthTx2.value }
+    ];
     const cryptoTx = Transactions.create({
       network: 'testnet',
       chain: 'ETH',
@@ -445,7 +448,11 @@ describe('Transaction Creation', () => {
       '0xf9013103843b9aca088301193a9444dfceb88f24c738d8ae9b7d4bb898cbca06db0e8756584930ac7a6ab9010425245b26000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000f514e00e20373f6366c9af966ff5f8be587595e90000000000000000000000003428f3eb7df7d4a16f9e4a5098574cea2cfbbdc60000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000dd764300b8000000000000000000000000000000000000000000000000000004880e500a0fa6a058080';
     expect(cryptoTx).to.equal(expectedTx);
 
-    const signedTx = Transactions.sign({ chain: 'ETH', tx: cryptoTx, key: { address: wallet.address, privKey: wallet.privateKey } });
+    const signedTx = Transactions.sign({
+      chain: 'ETH',
+      tx: cryptoTx,
+      key: { address: wallet.address, privKey: wallet.privateKey }
+    });
     const expectedSignedTx =
       '0xf9017103843b9aca088301193a9444dfceb88f24c738d8ae9b7d4bb898cbca06db0e8756584930ac7a6ab9010425245b26000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000f514e00e20373f6366c9af966ff5f8be587595e90000000000000000000000003428f3eb7df7d4a16f9e4a5098574cea2cfbbdc60000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000dd764300b8000000000000000000000000000000000000000000000000000004880e500a0fa6a2da09ce32b095b2b6198360b47151efc9bed92c814d77b2f2db79cedcd8132fed8c4a064d7e2d5153f14f39afafa5a6dda19a14c3f20c1926a94a60749685575815ff9';
     expect(expectedSignedTx).to.equal(signedTx);
@@ -464,8 +471,11 @@ describe('Transaction Creation', () => {
     const rawEthTx2 = {
       value: '900',
       to: '0x3428F3Eb7df7D4a16f9e4A5098574Cea2CFBbdc6'
-    }
-    const recipients = [{ address: rawEthTx.to, amount: rawEthTx.value }, { address: rawEthTx2.to, amount: rawEthTx2.value }];
+    };
+    const recipients = [
+      { address: rawEthTx.to, amount: rawEthTx.value },
+      { address: rawEthTx2.to, amount: rawEthTx2.value }
+    ];
     const cryptoTx = Transactions.create({
       network: 'ropsten',
       chain: 'ETHERC20',
@@ -480,7 +490,11 @@ describe('Transaction Creation', () => {
       '0xf9014930846baf8e7c82db9194328cab2bd398a6e577d8ab1d0ae0b969fd70969c80b90124aee2561300000000000000000000000075c87615ffc0bb34a24ed4ac62c26a1d8ea75336000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000f514e00e20373f6366c9af966ff5f8be587595e90000000000000000000000003428f3eb7df7d4a16f9e4a5098574cea2cfbbdc600000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000eef0000000000000000000000000000000000000000000000000000000000000384038080';
     expect(cryptoTx).to.equal(expectedTx);
 
-    const signedTx = Transactions.sign({ chain: 'ETHERC20', tx: cryptoTx, key: { address: wallet.address, privKey: wallet.privateKey } });
+    const signedTx = Transactions.sign({
+      chain: 'ETHERC20',
+      tx: cryptoTx,
+      key: { address: wallet.address, privKey: wallet.privateKey }
+    });
     const expectedSignedTx =
       '0xf9018930846baf8e7c82db9194328cab2bd398a6e577d8ab1d0ae0b969fd70969c80b90124aee2561300000000000000000000000075c87615ffc0bb34a24ed4ac62c26a1d8ea75336000000000000000000000000000000000000000000000000000000000000006000000000000000000000000000000000000000000000000000000000000000c00000000000000000000000000000000000000000000000000000000000000002000000000000000000000000f514e00e20373f6366c9af966ff5f8be587595e90000000000000000000000003428f3eb7df7d4a16f9e4a5098574cea2cfbbdc600000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000eef00000000000000000000000000000000000000000000000000000000000003842aa0e0b4515bc51bfd5e1642bd37004b8862c7b5d6be23812cab3994785997687aaaa06637a9d41edfeab987470eb9303d07e3da576ce48d30a42a5344aeede4408f90';
     // https://ropsten.etherscan.io/tx/0x0ac05ffa47fcd932a89dafdcea5580c4b424f2ae6a38e130f0e3853f561fdf1f
@@ -581,7 +595,7 @@ describe('Transaction Creation', () => {
       Transactions.create(xrpParams);
     } catch (err) {
       expect(err).to.exist;
-      expect(err.message).to.equal('instance.payment.invoiceID does not match pattern "^[A-F0-9]{64}$"');
+      expect(err.message).to.equal('Invalid Hash length 28');
     }
   });
 
@@ -600,9 +614,7 @@ describe('Transaction Creation', () => {
       Transactions.create(xrpParams);
     } catch (err) {
       expect(err).to.exist;
-      expect(err.message).to.equal(
-        'instance.address is not exactly one from <xAddress>,<classicAddress>,instance.payment.source is not exactly one from <sourceExactAdjustment>,<maxAdjustment>'
-      );
+      expect(err.message).to.equal('checksum_invalid');
     }
   });
 
@@ -635,7 +647,10 @@ describe('Transaction Creation', () => {
         address: 'LtytCSPDDKwT54zLyuT5NCsZXidf3T7Vkk',
         privKey: 'f8ee43e1114223e41a15bcde832fbfb636c91a99e92c4d76c5926785cd81f1be'
       },
-      { address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa', privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5' }
+      {
+        address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa',
+        privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5'
+      }
     ];
     const signed = Transactions.sign({ chain: 'DUC', tx, keys, utxos });
     const expected =
@@ -1034,7 +1049,10 @@ it('should create a DUC tx (utxo: 100,000,000 duc, amount: 50,000,000 duc)', () 
       address: 'LtytCSPDDKwT54zLyuT5NCsZXidf3T7Vkk',
       privKey: 'f8ee43e1114223e41a15bcde832fbfb636c91a99e92c4d76c5926785cd81f1be'
     },
-    { address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa', privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5' }
+    {
+      address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa',
+      privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5'
+    }
   ];
   const signed = Transactions.sign({ chain: 'DUC', tx, keys, utxos });
   const expected =
@@ -1064,7 +1082,10 @@ it('should create a DUC tx (utxo: 1,000,000,000 duc, amount: 500,000,000 duc)', 
       address: 'LtytCSPDDKwT54zLyuT5NCsZXidf3T7Vkk',
       privKey: 'f8ee43e1114223e41a15bcde832fbfb636c91a99e92c4d76c5926785cd81f1be'
     },
-    { address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa', privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5' }
+    {
+      address: 'M1rkXAa55AFuEGrfBAvZq3s28L7NsgekBa',
+      privKey: 'bfb29b45424c035c26b4000a2757977216d60ca956444e413d7d9ccea71d22d5'
+    }
   ];
   const signed = Transactions.sign({ chain: 'DUC', tx, keys, utxos });
   const expected =
