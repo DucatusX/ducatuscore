@@ -1,7 +1,6 @@
-import { deriveAddress } from 'xrpl';
-import { IDeriver } from '..';
-
 import DucatuscoreLib from '@ducatus/ducatuscore-lib';
+import rippleKeypairs from 'ripple-keypairs';
+import { IDeriver } from '..';
 
 export class XrpDeriver implements IDeriver {
   deriveAddress(network, xpubkey, addressIndex, isChange) {
@@ -19,7 +18,7 @@ export class XrpDeriver implements IDeriver {
   deriveAddressWithPath(network: string, xpubKey: string, path: string) {
     const xpub = new DucatuscoreLib.HDPublicKey(xpubKey, network);
     const pubKey = xpub.derive(path).toObject().publicKey;
-    const address = deriveAddress(pubKey);
+    const address = rippleKeypairs.deriveAddress(pubKey);
     return address;
   }
 
@@ -28,12 +27,12 @@ export class XrpDeriver implements IDeriver {
     const derivedXPriv = xpriv.derive(path);
     const privKey = derivedXPriv.toObject().privateKey.toUpperCase();
     const pubKey = derivedXPriv.hdPublicKey.toObject().publicKey.toUpperCase();
-    const address = deriveAddress(pubKey);
+    const address = rippleKeypairs.deriveAddress(pubKey);
     return { address, privKey, pubKey, path };
   }
 
   getAddress(network: string, pubKey: string) {
-    const address = deriveAddress(pubKey);
+    const address = rippleKeypairs.deriveAddress(pubKey);
     return address;
   }
 }

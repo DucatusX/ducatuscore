@@ -1,13 +1,26 @@
 import { createHash } from 'crypto';
-import * as xrpl from 'xrpl';
+import { encode, decode, encodeForSigning } from 'ripple-binary-codec';
 import { Key } from '../../derivation';
+import { sign } from 'ripple-keypairs';
 
 enum HashPrefix {
-  // transaction plus signature to give transaction ID
   livenet = 0x54584e00,
   mainnet = 0x54584e00,
   testnet = 0x73747800
 }
+
+interface Transaction {
+  TransactionType: string;
+  Account: string;
+  Destination?: string;
+  Amount?: string;
+  Fee: string;
+  Sequence: number;
+  Flags?: number;
+  InvoiceID?: string;
+  DestinationTag?: number;
+}
+
 export class XRPTxProvider {
   create(params: {
     recipients: Array<{ address: string; amount: string; tag?: number }>;
@@ -19,63 +32,76 @@ export class XRPTxProvider {
     nonce: number;
     type?: string;
     flags?: number;
-  }) {
+  }): string {
     const { recipients, tag, from, invoiceID, fee, nonce, type, flags } = params;
+    const { address, amount } = recipients[0];
+    const destinationTag = recipients[0]?.tag || tag;
 
-    switch (type?.toLowerCase()) {
+    const txType = (type || 'payment').toLowerCase();
+    let txJSON: Transaction;
+
+    switch (txType) {
       case 'payment':
-      default:
-        const { address, amount } = recipients[0];
-        const _tag = recipients[0]?.tag || tag;
-        const paymentTx: xrpl.Payment = {
+        txJSON = {
           TransactionType: 'Payment',
           Account: from,
           Destination: address,
           Amount: amount.toString(),
           Fee: fee.toString(),
           Sequence: nonce,
-          Flags: 2147483648 // tfFullyCanonicalSig - DEPRECATED but still here for backward compatibility
+          Flags: flags ?? 2147483648
         };
-        if (flags != null) {
-          paymentTx.Flags = flags;
-        }
-        if (invoiceID) {
-          paymentTx.InvoiceID = invoiceID;
-        }
-        if (_tag) {
-          paymentTx.DestinationTag = _tag;
-        }
-        return xrpl.encode(paymentTx);
+        if (invoiceID) txJSON.InvoiceID = invoiceID;
+        if (destinationTag) txJSON.DestinationTag = destinationTag;
+        break;
+
       case 'accountset':
-        if (!xrpl.AccountSetTfFlags[flags]) {
-          throw new Error('Invalid tfAccountSet flag');
-        }
-        const accountSetTx: xrpl.AccountSet = {
+        txJSON = {
           TransactionType: 'AccountSet',
           Account: from,
-          Flags: (isNaN(flags) ? xrpl.AccountSetTfFlags[flags] : flags) as number, // in testing, only the number values take effect.
           Fee: fee.toString(),
-          Sequence: nonce
+          Sequence: nonce,
+          Flags: flags ?? 0
         };
-        return xrpl.encode(accountSetTx);
+        break;
+
       case 'accountdelete':
-        const accountDeleteTx: xrpl.AccountDelete = {
+        txJSON = {
           TransactionType: 'AccountDelete',
           Account: from,
-          Destination: recipients[0].address,
-          DestinationTag: recipients[0].tag,
+          Destination: address,
           Fee: fee.toString(),
           Sequence: nonce
         };
-        return xrpl.encode(accountDeleteTx);
+        if (destinationTag) txJSON.DestinationTag = destinationTag;
+        break;
+
+      default:
+        throw new Error(`Unsupported transaction type: ${txType}`);
     }
+
+    return encode(txJSON);
   }
 
   getSignatureObject(params: { tx: string; key: Key }) {
     const { tx, key } = params;
-    const txJSON = (xrpl.decode(tx) as unknown) as xrpl.Payment;
-    const signedTx = new xrpl.Wallet(key.pubKey.toUpperCase(), key.privKey.toUpperCase()).sign(txJSON);
-    return { signedTransaction: signedTx.tx_blob, hash: signedTx.hash };
+    const txJSON = decode(tx);
+
+    txJSON.SigningPubKey = key.pubKey.toUpperCase();
+
+    const signingData = encodeForSigning(txJSON);
+    const signature = sign(signingData, key.privKey.toUpperCase());
+
+    txJSON.TxnSignature = signature;
+
+    const signedTransaction = encode(txJSON);
+
+    const hash = this.getHash(params);
+
+    return {
+      signedTransaction,
+      hash
+    };
   }
 
   getSignature(params: { tx: string; key: Key }): string {
@@ -90,14 +116,12 @@ export class XRPTxProvider {
   }
 
   applySignature(params: { tx: string; signature: string }): string {
-    const { signature } = params;
-    return signature;
+    return params.signature;
   }
 
   sign(params: { tx: string; key: Key }): string {
-    const { tx, key } = params;
-    const signature = this.getSignature({ tx, key });
-    return this.applySignature({ tx, signature });
+    const signature = this.getSignature(params);
+    return this.applySignature({ tx: params.tx, signature });
   }
 
   sha512Half(hex: string): string {

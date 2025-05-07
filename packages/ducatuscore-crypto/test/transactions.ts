@@ -595,7 +595,7 @@ describe('Transaction Creation', () => {
       Transactions.create(xrpParams);
     } catch (err) {
       expect(err).to.exist;
-      expect(err.message).to.equal('Invalid Hash length 28');
+      expect(err.message).to.equal('28 == 32');
     }
   });
 
