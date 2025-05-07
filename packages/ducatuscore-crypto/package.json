@@ -1,6 +1,6 @@
 {
   "name": "@ducatus/ducatuscore-crypto",
-  "version": "10.1.15",
+  "version": "10.1.16",
   "description": "A multi-currency support library for address derivation, private key creation, and transaction creation",
   "license": "ISC",
   "main": "./ts_build/src/index.js",
@@ -15,9 +15,9 @@
     "pub": "npm run compile && npm publish --access public"
   },
   "dependencies": {
-    "@ducatus/ducatuscore-lib": "^10.1.15",
-    "@ducatus/ducatuscore-lib-cash": "^10.1.15",
-    "@ducatus/ducatuscore-lib-duc": "^10.1.15",
+    "@ducatus/ducatuscore-lib": "^10.1.16",
+    "@ducatus/ducatuscore-lib-cash": "^10.1.16",
+    "@ducatus/ducatuscore-lib-duc": "^10.1.16",
     "ethers": "^5.0.12",
     "info": "0.0.6-beta.0",
     "ripple-binary-codec": "0.2.7",
@@ -34,5 +34,5 @@
     "tslint": "5.14.0",
     "typescript": "4.9.4"
   },
-  "gitHead": "88682adcb3ea4c25378f388d3cd6a286b1c37cf5"
+  "gitHead": "f3bdd68f4c4aa57cdab726b54de652e6ca79eb4d"
 }

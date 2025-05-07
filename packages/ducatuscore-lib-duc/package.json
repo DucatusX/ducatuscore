@@ -1,6 +1,6 @@
 {
   "name": "@ducatus/ducatuscore-lib-duc",
-  "version": "10.1.15",
+  "version": "10.1.16",
   "description": "A pure and powerful JavaScript DucatusCoin library.",
   "license": "ISC",
   "main": "index.js",
@@ -25,11 +25,11 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@ducatus/ducatuscore-build": "^10.1.15",
+    "@ducatus/ducatuscore-build": "^10.1.16",
     "brfs": "^2.0.1",
     "chai": "^4.2.0",
     "gulp": "^4.0.0",
     "sinon": "^7.1.1"
   },
-  "gitHead": "88682adcb3ea4c25378f388d3cd6a286b1c37cf5"
+  "gitHead": "f3bdd68f4c4aa57cdab726b54de652e6ca79eb4d"
 }

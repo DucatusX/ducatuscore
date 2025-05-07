@@ -1,7 +1,7 @@
 {
   "name": "@ducatus/ducatuscore-wallet-service",
   "description": "A service for Mutisig HD Bitcoin Wallets",
-  "version": "10.1.15",
+  "version": "10.1.16",
   "license": "ISC",
   "main": "ts_build/index.js",
   "types": "./ts_build/index.d.ts",
@@ -22,10 +22,10 @@
     "clean:fiatrates": "npm run compile && chmod +x ./ts_build/cleanfiatrates/cleanfiatrates.js && ./ts_build/cleanfiatrates/cleanfiatrates.js "
   },
   "dependencies": {
-    "@ducatus/ducatuscore-crypto": "^10.1.15",
-    "@ducatus/ducatuscore-lib": "^10.1.15",
-    "@ducatus/ducatuscore-lib-cash": "^10.1.15",
-    "@ducatus/ducatuscore-lib-duc": "^10.1.15",
+    "@ducatus/ducatuscore-crypto": "^10.1.16",
+    "@ducatus/ducatuscore-lib": "^10.1.16",
+    "@ducatus/ducatuscore-lib-cash": "^10.1.16",
+    "@ducatus/ducatuscore-lib-duc": "^10.1.16",
     "@sendgrid/mail": "6.5.4",
     "abi-decoder": "2.4.0",
     "async": "0.9.2",
@@ -81,5 +81,5 @@
     "typescript": "^4.9.4",
     "typescript-eslint-parser": "^22.0.0"
   },
-  "gitHead": "88682adcb3ea4c25378f388d3cd6a286b1c37cf5"
+  "gitHead": "f3bdd68f4c4aa57cdab726b54de652e6ca79eb4d"
 }
