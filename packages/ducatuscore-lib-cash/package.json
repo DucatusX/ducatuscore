@@ -1,6 +1,6 @@
 {
   "name": "@ducatus/ducatuscore-lib-cash",
-  "version": "10.1.14",
+  "version": "10.1.15",
   "description": "A pure and powerful JavaScript Bitcoin Cash library.",
   "license": "ISC",
   "main": "index.js",
@@ -31,7 +31,7 @@
     "request": "browser-request"
   },
   "dependencies": {
-    "@ducatus/ducatuscore-lib": "^10.1.14",
+    "@ducatus/ducatuscore-lib": "^10.1.15",
     "bn.js": "=4.11.8",
     "bs58": "^4.0.1",
     "buffer-compare": "=1.1.1",
@@ -40,12 +40,12 @@
     "lodash": "^4.17.20"
   },
   "devDependencies": {
-    "@ducatus/ducatuscore-build": "^10.1.14",
+    "@ducatus/ducatuscore-build": "^10.1.15",
     "base-x": "=3.0.4",
     "brfs": "^2.0.1",
     "chai": "^4.2.0",
     "gulp": "^4.0.0",
     "sinon": "^7.1.1"
   },
-  "gitHead": "c527f2603d2a3b52f45df69be93a6fe9519599c6"
+  "gitHead": "88682adcb3ea4c25378f388d3cd6a286b1c37cf5"
 }
