@@ -17,7 +17,8 @@ const cacheDeleted = db.cache.deleteMany({
         },
         { type: { $in: ['historyCacheStatusV8', 'historyCacheV8', 'historyStream'] } }
       ]
-    }
+    },
+    {key: { $regex: /ducx/ }}
   ]
 })
 print(`Cache deleted: ${cacheDeleted.deletedCount}`)
@@ -28,3 +29,23 @@ const addressesUnregistered = db.addresses.updateMany(
 print(`Addresses unregistered: ${addressesUnregistered.modifiedCount}`)
 const walletsUnregistered = db.wallets.updateMany({ id: { $in: walletIds } }, { $set: { beRegistered: null } })
 print(`Wallets unregistered: ${walletsUnregistered.modifiedCount}`)
+
+use ducatuscore
+
+const blocksDeleted = db.blocks.deleteMany({chain: "DUCX"})
+print(`Blocks deleted: ${blocksDeleted.deletedCount}`)
+const transactionsDeleted = db.transactions.deleteMany({chain: "DUCX"})
+print(`Transactions deleted: ${transactionsDeleted.deletedCount}`)
+const eventsDeleted = db.events.deleteMany({"payload.chain": "DUCX"})
+print(`Events deleted: ${eventsDeleted.deletedCount}`)
+db.state.updateOne(
+  {},
+  {
+    $pull: { initialSyncComplete: "DUCX:mainnet" },
+    $unset: {
+      "syncingNode:DUCX:testnet": "",
+      "syncingNode:DUCX:mainnet": ""
+    }
+  }
+)
+print(`State updated`);

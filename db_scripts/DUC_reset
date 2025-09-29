@@ -1,0 +1,52 @@
+use dws
+
+const walletIds = db.wallets.find({ coin: 'duc' }, { id: 1 }).toArray().map(doc => doc.id)
+const txsDeleted = db.txs.deleteMany({
+  $or: [{ coin: 'duc' }, { chain: 'duc' }, { walletId: { $in: walletIds } }]
+})
+print(`Txs deleted: ${txsDeleted.deletedCount}`)
+const cacheDeleted = db.cache.deleteMany({
+  $or: [
+    { walletId: { $in: walletIds } },
+    {
+      $and: [
+        {
+          $or: walletIds.map(id => ({
+            walletId: { $regex: `^${id}` }
+          }))
+        },
+        { type: { $in: ['historyCacheStatusV8', 'historyCacheV8', 'historyStream'] } }
+      ]
+    }
+  ]
+})
+print(`Cache deleted: ${cacheDeleted.deletedCount}`)
+const addressesUnregistered = db.addresses.updateMany(
+  { walletId: { $in: walletIds } },
+  { $set: { beRegistered: null } }
+)
+print(`Addresses unregistered: ${addressesUnregistered.modifiedCount}`)
+const walletsUnregistered = db.wallets.updateMany({ id: { $in: walletIds } }, { $set: { beRegistered: null } })
+print(`Wallets unregistered: ${walletsUnregistered.modifiedCount}`)
+
+use ducatuscore
+
+const blocksDeleted = db.blocks.deleteMany({chain: "DUC"})
+print(`Blocks deleted: ${blocksDeleted.deletedCount}`)
+const transactionsDeleted = db.transactions.deleteMany({chain: "DUC"})
+print(`Transactions deleted: ${transactionsDeleted.deletedCount}`)
+const eventsDeleted = db.events.deleteMany({"payload.chain": "DUC"})
+print(`Events deleted: ${eventsDeleted.deletedCount}`)
+const coinsDeleted = db.coins.deleteMany({"chain": "DUC"})
+print(`Coins deleted: ${coinsDeleted.deletedCount}`)
+db.state.updateOne(
+  {},
+  {
+    $pull: { initialSyncComplete: "DUC:mainnet" },
+    $unset: {
+      "syncingNode:DUC:testnet": "",
+      "syncingNode:DUC:mainnet": ""
+    }
+  }
+)
+print(`State updated`);
