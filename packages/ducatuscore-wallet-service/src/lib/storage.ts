@@ -18,6 +18,7 @@ import {
   Wallet
 } from './model';
 import { Rate } from './fiatrateproviders';
+import { DucConvertRequest } from 'src/lib/model/duc-convert-request';
 
 const BCHAddressTranslator = require('./bchaddresstranslator'); // only for migration
 const $ = require('preconditions').singleton();
@@ -38,7 +39,8 @@ const collections = {
   SESSIONS: 'sessions',
   PUSH_NOTIFICATION_SUBS: 'push_notification_subs',
   TX_CONFIRMATION_SUBS: 'tx_confirmation_subs',
-  LOCKS: 'locks'
+  LOCKS: 'locks',
+  DUC_CONVERT_REQUESTS: 'duc_convert_requests'
 };
 
 const Constants = Common.Constants;
@@ -159,6 +161,9 @@ export class Storage {
     });
     db.collection(collections.SESSIONS).createIndex({
       copayerId: 1
+    });
+    db.collection(collections.DUC_CONVERT_REQUESTS).createIndex({
+      ducAddress: 1
     });
   }
 
@@ -1753,5 +1758,48 @@ export class Storage {
       },
       cb
     );
+  }
+
+  getNotCompletedDucConvertRequests(cb: (err: Error | null, res?: DucConvertRequest[]) => void) {
+    this.db
+      .collection(collections.DUC_CONVERT_REQUESTS)
+      .find({
+        completed: false
+      })
+      .toArray((err, result) => {
+        if (err) return cb(err);
+        if (!result) return cb(null, []);
+        return cb(null, result);
+      });
+  }
+
+  getDucConvertRequest(walletId: string, cb: (err: Error | null, res?: DucConvertRequest) => void) {
+    this.db.collection(collections.DUC_CONVERT_REQUESTS).findOne({ walletId }, cb);
+  }
+
+  storeDucConvertRequest(walletId: string, ducxAddress: string, cb: (err: Error | null, res?: any) => void) {
+    const ducConvertRequest: DucConvertRequest = {
+      walletId,
+      ducxAddress,
+      completed: false,
+      createdAt: new Date()
+    };
+    this.db.collection(collections.DUC_CONVERT_REQUESTS).insertOne(ducConvertRequest, cb);
+  }
+
+  updateDucConvertRequest(
+    walletId: string,
+    fields: Partial<DucConvertRequest>,
+    cb: (err: Error | null, res?: any) => void
+  ) {
+    this.db
+      .collection(collections.DUC_CONVERT_REQUESTS)
+      .updateOne({ walletId }, { $set: fields }, { upsert: false }, cb);
+  }
+
+  markDucConvertRequestAsCompleted(walletId: string, cb: (err: Error | null, res?: any) => void) {
+    this.db
+      .collection(collections.DUC_CONVERT_REQUESTS)
+      .updateOne({ walletId }, { $set: { completed: true, completedAt: new Date() } }, cb);
   }
 }

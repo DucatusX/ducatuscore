@@ -74,11 +74,11 @@ export class ExpressApp {
     );
 
     const urlDecode = (req, res, next) => {
-      req.url = decodeURIComponent(req.url)
-      next()
-    }
+      req.url = decodeURIComponent(req.url);
+      next();
+    };
 
-    this.app.use(urlDecode)
+    this.app.use(urlDecode);
 
     this.app.use((req, res, next) => {
       if (config.maintenanceOpts.maintenanceMode === true) {
@@ -192,7 +192,6 @@ export class ExpressApp {
 
       WalletService.getInstanceWithAuth(auth, (err, server) => {
         if (err) {
-
           if (opts.silentFailure) {
             return cb(null, err);
           } else {
@@ -1476,6 +1475,41 @@ export class ExpressApp {
             return returnError(err, res, req);
           }
           res.json(data?.[chain]?.[network]);
+        });
+      });
+    });
+
+    router.get('/ducConvertRequest', (req, res) => {
+      getServerWithAuth(req, res, server => {
+        const walletId = server.walletId;
+        server.getDucConvertRequest({ walletId }, (err, request) => {
+          if (err) return returnError(err, res, req);
+          console.log('DUC address from db:', request);
+          res.json({ request });
+        });
+      });
+    });
+
+    router.post('/ducConvertRequest', (req, res) => {
+      getServerWithAuth(req, res, server => {
+        const walletId = server.walletId;
+        const { ducxAddress } = req.body;
+        server.createDucConvertRequest({ walletId, ducxAddress }, err => {
+          if (err) return returnError(err, res, req);
+          console.log('DUC address saved in db');
+          res.sendStatus(200);
+        });
+      });
+    });
+
+    router.patch('/ducConvertRequest', (req, res) => {
+      getServerWithAuth(req, res, server => {
+        const walletId = server.walletId;
+        const { ducxAddress } = req.body;
+        server.updateDucConvertRequest({ walletId, ducxAddress }, err => {
+          if (err) return returnError(err, res, req);
+          console.log('DUC address updated in db');
+          res.sendStatus(200);
         });
       });
     });

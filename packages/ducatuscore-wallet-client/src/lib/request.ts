@@ -93,7 +93,7 @@ export class Request {
     });
 
     if (args) {
-      if (method == 'post' || method == 'put') {
+      if (method == 'post' || method == 'put' || method == 'patch') {
         r.send(args);
       } else {
         r.query(args);
@@ -186,6 +186,11 @@ export class Request {
   put(url, args, cb) {
     args = args || {};
     return this.doRequest('put', url, args, false, cb);
+  }
+
+  patch(url, args, cb) {
+    args = args || {};
+    return this.doRequest('patch', url, args, false, cb);
   }
 
   //  Do a GET request

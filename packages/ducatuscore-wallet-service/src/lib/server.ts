@@ -1,5 +1,4 @@
 import * as async from 'async';
-import * as crypto from 'crypto'
 import * as _ from 'lodash';
 import moment from 'moment';
 import 'source-map-support/register';
@@ -48,7 +47,7 @@ const Ducatuscore_ = {
   xrp: Ducatuscore,
   ducx: Ducatuscore,
   bnb: Ducatuscore,
-  duc: require('@ducatus/ducatuscore-lib-duc'),
+  duc: require('@ducatus/ducatuscore-lib-duc')
 };
 
 const Utils = Common.Utils;
@@ -1409,9 +1408,10 @@ export class WalletService implements IWalletService {
   createAddress(opts, cb) {
     opts = opts || {};
 
-    if (opts.addressWithActivity) this.storage.storeAddress(opts.addressWithActivity, err => {
-      if (err) return cb(err);
-    });
+    if (opts.addressWithActivity)
+      this.storage.storeAddress(opts.addressWithActivity, err => {
+        if (err) return cb(err);
+      });
 
     const createNewAddress = (wallet, cb) => {
       let address;
@@ -3177,11 +3177,11 @@ export class WalletService implements IWalletService {
     }
   }
 
-  getPendingTxsPromise(opts): Promise<any>  {
+  getPendingTxsPromise(opts): Promise<any> {
     return new Promise((resolve, reject) => {
       this.getPendingTxs(opts, (err, txps) => {
         if (err) return reject(err);
-        return resolve(txps)
+        return resolve(txps);
       });
     });
   }
@@ -4509,8 +4509,8 @@ export class WalletService implements IWalletService {
       if (err) return cb(err);
       if (!wallet.isComplete()) return cb(Errors.WALLET_NOT_COMPLETE);
 
-       // do not scan single address UTXO wallets.
-       if (wallet.singleAddress && ChainService.isUTXOChain(wallet.chain)) return cb();
+      // do not scan single address UTXO wallets.
+      if (wallet.singleAddress && ChainService.isUTXOChain(wallet.chain)) return cb();
 
       setTimeout(() => {
         wallet.beRegistered = false;
@@ -4677,6 +4677,41 @@ export class WalletService implements IWalletService {
     } else {
       cb(new Error('Node chains config is not found'));
     }
+  }
+
+  getDucConvertRequest(opts, cb) {
+    if (!checkRequired(opts, ['walletId'], cb)) return;
+
+    this.storage.getDucConvertRequest(opts.walletId, cb);
+  }
+
+  createDucConvertRequest(opts, cb) {
+    if (!checkRequired(opts, ['walletId', 'ducxAddress'], cb)) return;
+
+    this.storage.getDucConvertRequest(opts.walletId, (err, request) => {
+      if (err) return cb(err);
+      if (request) return cb(Errors.DUC_CONVERT_REQUEST_ALREADY_EXISTS);
+
+      this.storage.storeDucConvertRequest(opts.walletId, opts.ducxAddress, (err, res) => {
+        if (err) return cb(err);
+        cb(null);
+      });
+    });
+  }
+
+  updateDucConvertRequest(opts, cb) {
+    if (!checkRequired(opts, ['walletId', 'ducxAddress'], cb)) return;
+
+    this.storage.getDucConvertRequest(opts.walletId, (err, request) => {
+      if (err) return cb(err);
+      if (!request) return cb(Errors.NOT_FOUND);
+      if (request.completed) return cb(Errors.DUC_CONVERT_REQUEST_ALREADY_COMPLETED);
+
+      this.storage.updateDucConvertRequest(opts.walletId, { ducxAddress: opts.ducxAddress }, (err, res) => {
+        if (err) return cb(err);
+        cb(null);
+      });
+    });
   }
 }
 

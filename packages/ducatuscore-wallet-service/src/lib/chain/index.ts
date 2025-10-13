@@ -75,7 +75,7 @@ const chains: { [chain: string]: IChain } = {
   DUCX: new DucxChain(),
   DUC: new DucChain(),
   XRP: new XrpChain(),
-  BNB: new BnbChain(),
+  BNB: new BnbChain()
 };
 
 class ChainProxy {

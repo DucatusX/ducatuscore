@@ -1,7 +1,7 @@
 {
   "name": "@ducatus/ducatuscore-node",
   "description": "A blockchain indexing node with extended capabilities using ducatuscore",
-  "version": "10.1.17",
+  "version": "10.1.18",
   "license": "ISC",
   "engines": {
     "node": ">=18.0.0"
@@ -73,16 +73,16 @@
     "typescript-eslint-parser": "15.0.0"
   },
   "dependencies": {
-    "@ducatus/crypto-rpc": "^10.1.17",
-    "@ducatus/ducatuscore-client": "^10.1.17",
-    "@ducatus/ducatuscore-crypto": "^10.1.17",
-    "@ducatus/ducatuscore-lib": "^10.1.17",
-    "@ducatus/ducatuscore-lib-cash": "^10.1.17",
-    "@ducatus/ducatuscore-lib-duc": "^10.1.17",
-    "@ducatus/ducatuscore-p2p": "^10.1.17",
-    "@ducatus/ducatuscore-p2p-cash": "^10.1.17",
-    "@ducatus/ducatuscore-p2p-duc": "^10.1.17",
-    "@ducatus/ducatuscore-wallet-client": "^10.1.17",
+    "@ducatus/crypto-rpc": "^10.1.18",
+    "@ducatus/ducatuscore-client": "^10.1.18",
+    "@ducatus/ducatuscore-crypto": "^10.1.18",
+    "@ducatus/ducatuscore-lib": "^10.1.18",
+    "@ducatus/ducatuscore-lib-cash": "^10.1.18",
+    "@ducatus/ducatuscore-lib-duc": "^10.1.18",
+    "@ducatus/ducatuscore-p2p": "^10.1.18",
+    "@ducatus/ducatuscore-p2p-cash": "^10.1.18",
+    "@ducatus/ducatuscore-p2p-duc": "^10.1.18",
+    "@ducatus/ducatuscore-wallet-client": "^10.1.18",
     "abi-decoder": "2.4.0",
     "body-parser": "1.18.3",
     "cors": "2.8.4",

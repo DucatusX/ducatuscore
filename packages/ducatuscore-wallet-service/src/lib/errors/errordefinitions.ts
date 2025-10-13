@@ -2,6 +2,7 @@ const _ = require('lodash');
 import { ClientError } from './clienterror';
 
 const errors = {
+  NOT_FOUND: 'Not found',
   AD_ALREADY_EXISTS: 'Ad already exists',
   BAD_SIGNATURES: 'Bad signatures',
   COPAYER_DATA_MISMATCH: 'Copayer data mismatch',
@@ -34,7 +35,8 @@ const errors = {
   TX_NOT_ACCEPTED: 'The transaction proposal is not accepted',
   TX_NOT_FOUND: 'Transaction proposal not found',
   TX_NOT_PENDING: 'The transaction proposal is not pending',
-  TX_NONCE_CONFLICT: 'Unsigned TX proposal(s) with lower or conflicting nonces exist. Please sign or reject them first.',
+  TX_NONCE_CONFLICT:
+    'Unsigned TX proposal(s) with lower or conflicting nonces exist. Please sign or reject them first.',
   UNAVAILABLE_UTXOS: 'Unavailable unspent outputs',
   NO_INPUT_PATHS: 'Derivation paths were not provided for the inputs',
   UPGRADE_NEEDED: 'Client app needs to be upgraded',
@@ -44,7 +46,9 @@ const errors = {
   WALLET_NOT_COMPLETE: 'Wallet is not complete',
   WALLET_NOT_FOUND: 'Wallet not found',
   WALLET_NEED_SCAN: 'Wallet needs addresses scan',
-  WRONG_SIGNING_METHOD: 'Wrong signed method for coin/network'
+  WRONG_SIGNING_METHOD: 'Wrong signed method for coin/network',
+  DUC_CONVERT_REQUEST_ALREADY_EXISTS: 'DucatusX conversion request already exists',
+  DUC_CONVERT_REQUEST_ALREADY_COMPLETED: 'DucatusX conversion request already completed'
 };
 
 const errorObjects = _.fromPairs(
