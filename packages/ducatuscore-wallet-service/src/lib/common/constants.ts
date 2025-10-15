@@ -9,7 +9,7 @@ export const Constants = {
     DUC: 'duc',
     DUCX: 'ducx',
     XRP: 'xrp',
-    BNB: 'bnb',
+    BNB: 'bnb'
   },
 
   DUCATUSCORE_SUPPORTED_COINS: {
@@ -170,3 +170,5 @@ export const Constants = {
     xrp: { testnet: 300, livenet: 0 }
   } as { [chain: string]: { [network: string]: number } }
 };
+
+export const DUC_BLOCKCHAIN_CLOSE_DATE = Date.UTC(2025, 10, 3);

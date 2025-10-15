@@ -34,6 +34,14 @@ const Errors = require('./errors');
 
 var BASE_URL = 'http://localhost:3232/dws/api';
 
+interface IDucTransferRequest {
+  walletId: string;
+  ducxAddress: string;
+  completed: boolean;
+  createdAt?: Date;
+  completedAt?: Date;
+}
+
 // /**
 // * @desc ClientAPI constructor.
 // *
@@ -3151,15 +3159,7 @@ export class API extends EventEmitter {
     });
   }
 
-  getDucConvertRequest(): Promise<{
-    request: {
-      walletId: string;
-      ducxAddress: string;
-      completed: boolean;
-      createdAt?: Date;
-      completedAt?: Date;
-    };
-  }> {
+  getDucConvertRequest(): Promise<IDucTransferRequest> {
     return new Promise((resolve, reject) => {
       this.request.get('/ducConvertRequest', (err, data) => {
         if (err) return reject(err);
@@ -3168,7 +3168,7 @@ export class API extends EventEmitter {
     });
   }
 
-  createDucConvertRequest(ducxAddress: string) {
+  createDucConvertRequest(ducxAddress: string): Promise<IDucTransferRequest> {
     return new Promise((resolve, reject) => {
       this.request.post('/ducConvertRequest', { ducxAddress }, (err, data) => {
         if (err) return reject(err);
@@ -3177,9 +3177,18 @@ export class API extends EventEmitter {
     });
   }
 
-  changeDucConvertRequestAddress(ducxAddress: string) {
+  changeDucConvertRequestAddress(ducxAddress: string): Promise<IDucTransferRequest> {
     return new Promise((resolve, reject) => {
       this.request.patch('/ducConvertRequest', { ducxAddress }, (err, data) => {
+        if (err) return reject(err);
+        return resolve(data);
+      });
+    });
+  }
+
+  getDucStatus() {
+    return new Promise((resolve, reject) => {
+      this.request.get('/ducStatus', (err, data) => {
         if (err) return reject(err);
         return resolve(data);
       });

@@ -30,6 +30,7 @@ import {
   Wallet
 } from './model';
 import { Storage } from './storage';
+import { DUC_BLOCKCHAIN_CLOSE_DATE } from './common/constants';
 
 const config = require('../config');
 const Uuid = require('uuid');
@@ -4694,6 +4695,8 @@ export class WalletService implements IWalletService {
 
       this.storage.storeDucConvertRequest(opts.walletId, opts.ducxAddress, (err, res) => {
         if (err) return cb(err);
+        console.log(res);
+
         cb(null);
       });
     });
@@ -4712,6 +4715,24 @@ export class WalletService implements IWalletService {
         cb(null);
       });
     });
+  }
+
+  getDucStatus(cb) {
+    const Weekday = 3;
+
+    const closeDate = new Date(DUC_BLOCKCHAIN_CLOSE_DATE);
+    const currentWeekday = closeDate.getUTCDay();
+
+    let daysToAdd = (Weekday - currentWeekday + 7) % 7;
+    if (daysToAdd === 0) daysToAdd = 7;
+
+    const nextDate = new Date(closeDate);
+    nextDate.setUTCDate(closeDate.getUTCDate() + daysToAdd);
+    nextDate.setUTCHours(0, 0, 0, 0);
+
+    const nextProcessingTime = nextDate.getTime();
+
+    cb(null, { shutdownTime: DUC_BLOCKCHAIN_CLOSE_DATE, nextProcessingTime });
   }
 }
 
