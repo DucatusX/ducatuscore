@@ -75,12 +75,12 @@ async function mintTokens(address: string, amount: ethers.types.BigNumber) {
 
       const gasPrice = await web3.eth.getGasPrice();
 
-      const signedTx = await signTx(tx, {
-        to: tokenAddress,
-        data: tx.encodeABI(),
-        gas: gasLimit,
-        gasPrice
-      });
+      // const signedTx = await signTx(tx, {
+      //   to: tokenAddress,
+      //   data: tx.encodeABI(),
+      //   gas: gasLimit,
+      //   gasPrice
+      // });
 
       // const signedTx = await minterWallet.signTransaction({
       //   to: tokenAddress,
@@ -89,13 +89,14 @@ async function mintTokens(address: string, amount: ethers.types.BigNumber) {
       //   gasPrice
       // });
 
-      const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      if (receipt.status) {
-        console.log(`Mint tx success: ${receipt.transactionHash}`);
-        return receipt.transactionHash;
-      } else {
-        throw new Error(`Mint tx failed on-chain: ${receipt.transactionHash}`);
-      }
+      // const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      // if (receipt.status) {
+      //   console.log(`Mint tx success: ${receipt.transactionHash}`);
+      //   return receipt.transactionHash;
+      // } else {
+      //   throw new Error(`Mint tx failed on-chain: ${receipt.transactionHash}`);
+      // }
+      return;
     } catch (err) {
       console.warn(`Mint error (attempt ${attempt}):`, err.message || err);
       if (attempt === RETRY_COUNT) throw err;
@@ -108,6 +109,7 @@ async function mintTokens(address: string, amount: ethers.types.BigNumber) {
 function getAmountForAddress(address: string) {
   const balance = balanceByAddress[address] ?? ethers.utils.bigNumberify(0);
   const deposit = depositsByAddress[address] ?? ethers.utils.bigNumberify(0);
+  console.log(`Amounts for address ${address}: balance: ${balance}, deposit: ${deposit}`);
   return balance.add(deposit);
 }
 
