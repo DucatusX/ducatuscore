@@ -30,7 +30,7 @@ import {
   Wallet
 } from './model';
 import { Storage } from './storage';
-import { DUC_BLOCKCHAIN_CLOSE_DATE } from './common/constants';
+import { DUC_BLOCKCHAIN_CLOSE_DATE, DUC_REQUEST_PROCESSING_WEEKDAY } from './common/constants';
 
 const config = require('../config');
 const Uuid = require('uuid');
@@ -4718,21 +4718,26 @@ export class WalletService implements IWalletService {
   }
 
   getDucStatus(cb) {
-    const Weekday = 3;
-
     const closeDate = new Date(DUC_BLOCKCHAIN_CLOSE_DATE);
-    const currentWeekday = closeDate.getUTCDay();
+    const now = new Date();
 
-    let daysToAdd = (Weekday - currentWeekday + 7) % 7;
-    if (daysToAdd === 0) daysToAdd = 7;
+    const baseDate = now > closeDate ? now : closeDate;
 
-    const nextDate = new Date(closeDate);
-    nextDate.setUTCDate(closeDate.getUTCDate() + daysToAdd);
+    const currentWeekday = baseDate.getUTCDay();
+
+    let daysToAdd = (DUC_REQUEST_PROCESSING_WEEKDAY - currentWeekday + 7) % 7;
+    if (daysToAdd === 0) daysToAdd = 7; // если сегодня среда — берём следующую
+
+    const nextDate = new Date(baseDate);
+    nextDate.setUTCDate(baseDate.getUTCDate() + daysToAdd);
     nextDate.setUTCHours(0, 0, 0, 0);
 
     const nextProcessingTime = nextDate.getTime();
 
-    cb(null, { shutdownTime: DUC_BLOCKCHAIN_CLOSE_DATE, nextProcessingTime });
+    cb(null, {
+      shutdownTime: DUC_BLOCKCHAIN_CLOSE_DATE,
+      nextProcessingTime
+    });
   }
 }
 

@@ -549,6 +549,7 @@ export class V8 {
   }
 
   initSocket(callbacks) {
+    const DISPLAYED_ERROR_CHAINS = ['duc', 'ducx', 'bnb'];
     logger.info('V8 connecting socket at:' + this.host);
     // sockets always use the first server on the pull
     const walletsSocket = io.connect(this.host, { transports: ['websocket'] });
@@ -574,7 +575,7 @@ export class V8 {
     });
 
     blockSocket.on('connect_error', () => {
-      logger.error(`Error connecting to ${this.getConnectionInfo()}`);
+      if (DISPLAYED_ERROR_CHAINS.includes(this.chain)) logger.error(`Error connecting to ${this.getConnectionInfo()}`);
     });
 
     blockSocket.on('block', data => {
@@ -587,7 +588,8 @@ export class V8 {
     });
 
     walletsSocket.on('connect_error', () => {
-      logger.error(`Error connecting to ${this.getConnectionInfo()} ${this.chainNetwork}`);
+      if (DISPLAYED_ERROR_CHAINS.includes(this.chain))
+        logger.error(`Error connecting to ${this.getConnectionInfo()} ${this.chainNetwork}`);
     });
 
     walletsSocket.on('failure', err => {

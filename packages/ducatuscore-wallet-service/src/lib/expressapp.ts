@@ -9,7 +9,6 @@ import { ClientError } from './errors/clienterror';
 import { LogMiddleware } from './middleware';
 import { WalletService } from './server';
 import { Stats } from './stats';
-import { DUC_BLOCKCHAIN_CLOSE_DATE } from './common/constants';
 
 const bodyParser = require('body-parser');
 const compression = require('compression');
@@ -1485,7 +1484,7 @@ export class ExpressApp {
         const walletId = server.walletId;
         server.getDucConvertRequest({ walletId }, (err, request) => {
           if (err) return returnError(err, res, req);
-          res.json({ request });
+          res.json(request);
         });
       });
     });

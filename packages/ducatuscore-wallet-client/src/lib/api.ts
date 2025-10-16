@@ -3168,7 +3168,7 @@ export class API extends EventEmitter {
     });
   }
 
-  createDucConvertRequest(ducxAddress: string): Promise<IDucTransferRequest> {
+  createDucConvertRequest(ducxAddress: string): Promise<undefined> {
     return new Promise((resolve, reject) => {
       this.request.post('/ducConvertRequest', { ducxAddress }, (err, data) => {
         if (err) return reject(err);
@@ -3177,7 +3177,7 @@ export class API extends EventEmitter {
     });
   }
 
-  changeDucConvertRequestAddress(ducxAddress: string): Promise<IDucTransferRequest> {
+  changeDucConvertRequestAddress(ducxAddress: string): Promise<undefined> {
     return new Promise((resolve, reject) => {
       this.request.patch('/ducConvertRequest', { ducxAddress }, (err, data) => {
         if (err) return reject(err);
@@ -3186,7 +3186,10 @@ export class API extends EventEmitter {
     });
   }
 
-  getDucStatus() {
+  getDucStatus(): Promise<{
+    shutdownTime: number;
+    nextProcessingTime: number;
+  }> {
     return new Promise((resolve, reject) => {
       this.request.get('/ducStatus', (err, data) => {
         if (err) return reject(err);
