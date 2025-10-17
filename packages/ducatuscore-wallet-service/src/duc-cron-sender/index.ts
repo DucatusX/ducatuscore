@@ -71,9 +71,9 @@ async function mintTokens(address: string, amount: ethers.types.BigNumber) {
       const tx = contract.methods.mint(address, amount);
 
       const gasLimit = await tx.estimateGas();
-      console.log('Estimated gas limit:', gasLimit);
-
       const gasPrice = await web3.eth.getGasPrice();
+
+      console.log('Estimated gas: limit:', gasLimit, 'price:', gasPrice);
 
       // const signedTx = await signTx(tx, {
       //   to: tokenAddress,
