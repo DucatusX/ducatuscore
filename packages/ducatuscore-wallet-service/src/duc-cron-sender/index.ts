@@ -23,10 +23,14 @@ const depositsByAddress: { [address: string]: ethers.types.BigNumber } = {};
 
 function normalizeData() {
   (wallets as IWallet[]).forEach(({ address, value }) => {
-    balanceByAddress[address] = ethers.utils.bigNumberify(`${value || 0}`);
+    balanceByAddress[address] = (balanceByAddress[address] ?? ethers.utils.bigNumberify(0)).add(
+      ethers.utils.bigNumberify(`${value || 0}`)
+    );
   });
   (deposits as IWallet[]).forEach(({ address, value }) => {
-    depositsByAddress[address] = ethers.utils.bigNumberify(`${value || 0}`);
+    depositsByAddress[address] = (depositsByAddress[address] ?? ethers.utils.bigNumberify(0)).add(
+      ethers.utils.bigNumberify(`${value || 0}`)
+    );
   });
 }
 
