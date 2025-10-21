@@ -15,7 +15,7 @@ export let ETH_TOKEN_OPTS = {
     name: 'Matic Token',
     symbol: 'MATIC',
     decimals: 18,
-    address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0',
+    address: '0x7d1afa7b718fb893db30a3abc0cfc608aacfebb0'
   },
   '0x8e870d67f660d95d5be530380d0ec0bd388289e1': {
     name: 'Paxos Dollar',
@@ -152,12 +152,12 @@ export let DUCX_TOKEN_OPTS = {
     decimal: 2,
     address: '0x519cb2e8f165c2fc2297f544639c71af33dae148'
   },
-  '0x89db0C0B7A5099CD784FE6d48499EFed70a66fF7_d': {
+  '0x4860903C09F330613A2A3A3e05587176d6DF6B23_d': {
     name: 'X-GEN TOKEN',
     symbol: 'X-GEN',
     decimals: 18,
-    address: '0x89db0C0B7A5099CD784FE6d48499EFed70a66fF7'
-  },
+    address: '0x4860903C09F330613A2A3A3e05587176d6DF6B23'
+  }
 };
 
 export let BNB_TOKEN_OPTS = {

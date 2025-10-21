@@ -1797,9 +1797,9 @@ export class Storage {
       .updateOne({ walletId }, { $set: fields }, { upsert: false }, cb);
   }
 
-  markDucConvertRequestAsCompleted(walletId: string, cb: (err: Error | null, res?: any) => void) {
+  markDucConvertRequestsAsCompleted(walletIds: string[], cb: (err: Error | null, res?: any) => void) {
     this.db
       .collection(collections.DUC_CONVERT_REQUESTS)
-      .updateOne({ walletId }, { $set: { completed: true, completedAt: new Date() } }, cb);
+      .updateMany({ walletId: { $in: walletIds } }, { $set: { completed: true, completedAt: new Date() } }, cb);
   }
 }

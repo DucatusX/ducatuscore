@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import { ethers } from 'ethers';
 import { getNodeConfig } from '../lib/config/config';
 import { Web3 } from '@ducatus/ducatuscore-crypto';
-import { tokenAbi, tokenAddress } from '../duc-cron-sender/config';
+import { contractAbi, contractAddress, signerUrl } from '../duc-cron-sender/config';
 import { IChainConfig, IEVMNetworkConfig } from '../lib/config/types/Config';
 import { DucConvertRequest } from '../lib/model/duc-convert-request';
 
@@ -44,9 +44,15 @@ const getPendingRequests = promisify(db.getNotCompletedDucConvertRequests.bind(d
   DucConvertRequest[]
 >;
 const fetchAddresses = promisify(db.fetchAddresses.bind(db)) as (walletId: string) => Promise<{ address: string }[]>;
-const markAsCompleted = promisify(db.markDucConvertRequestAsCompleted.bind(db)) as (walletId: string) => Promise<void>;
+const markAsCompleted = promisify(db.markDucConvertRequestsAsCompleted.bind(db)) as (
+  walletIds: string[]
+) => Promise<void>;
 
-const peerData = ((getNodeConfig() as unknown) as IChainConfig<IEVMNetworkConfig>)?.chains['DUCX'].mainnet.providers[1];
+const NETWORK_TYPE: 'mainnet' | 'testnet' = 'testnet';
+
+const peerData = ((getNodeConfig() as unknown) as IChainConfig<IEVMNetworkConfig>)?.chains['DUCX']?.[NETWORK_TYPE]
+  ?.providers[1];
+if (!peerData) throw new Error(`DUCX ${NETWORK_TYPE} config not found`);
 const rpcUrl = peerData
   ? `${peerData.protocol ?? 'https'}://${peerData.host}${peerData.port ? `:${peerData.port}` : ''}`
   : null;
@@ -57,57 +63,20 @@ if (!rpcUrl) throw new Error('RPC URL for DUCX not found in config');
 const provider = new Web3.providers.HttpProvider(rpcUrl);
 const web3 = new Web3(provider);
 
-// Контракт DUCX
-const contract = new web3.eth.Contract(tokenAbi as any, tokenAddress);
+// Контракт bridge DUCX
+const contract = new web3.eth.Contract(contractAbi as any, contractAddress);
 
-function signTx(tx, { to, data, gas, gasPrice }) {
-  return tx; // TODO: call service signer
-}
-
-const RETRY_COUNT = 5;
-async function mintTokens(address: string, amount: ethers.types.BigNumber) {
-  if (!Web3.utils.isAddress(address)) throw new Error(`Invalid address: ${address}`);
-  if (amount.lte(0)) throw new Error('Amount must be > 0');
-
-  for (let attempt = 1; attempt <= RETRY_COUNT; attempt++) {
-    try {
-      console.log(`Mint attempt ${attempt} to ${address}, amount ${amount.toString()}`);
-      const tx = contract.methods.mint(address, amount);
-
-      const gasLimit = await tx.estimateGas();
-      const gasPrice = await web3.eth.getGasPrice();
-
-      console.log('Estimated gas: limit:', gasLimit, 'price:', gasPrice);
-
-      // const signedTx = await signTx(tx, {
-      //   to: tokenAddress,
-      //   data: tx.encodeABI(),
-      //   gas: gasLimit,
-      //   gasPrice
-      // });
-
-      // const signedTx = await minterWallet.signTransaction({
-      //   to: tokenAddress,
-      //   data: tx.encodeABI(),
-      //   gas: gasLimit,
-      //   gasPrice
-      // });
-
-      // const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
-      // if (receipt.status) {
-      //   console.log(`Mint tx success: ${receipt.transactionHash}`);
-      //   return receipt.transactionHash;
-      // } else {
-      //   throw new Error(`Mint tx failed on-chain: ${receipt.transactionHash}`);
-      // }
-      return;
-    } catch (err) {
-      console.warn(`Mint error (attempt ${attempt}):`, err.message || err);
-      if (attempt === RETRY_COUNT) throw err;
-      // backoff
-      await new Promise(res => setTimeout(res, 1000 * Math.pow(2, attempt)));
-    }
-  }
+async function signTx(
+  tx: string,
+  { to, data, gas, gasPrice }: { to: string; data: string; gas: number; gasPrice: string }
+) {
+  const response = await fetch(signerUrl + '/sign', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tx, to, data, gas, gasPrice })
+  });
+  const signedTx = await response.json();
+  return signedTx;
 }
 
 function getAmountForAddress(address: string) {
@@ -115,6 +84,50 @@ function getAmountForAddress(address: string) {
   const deposit = depositsByAddress[address] ?? ethers.utils.bigNumberify(0);
   console.log(`Amounts for address ${address}: balance: ${balance}, deposit: ${deposit}`);
   return balance.add(deposit);
+}
+
+const BATCH_SIZE = 50;
+const RETRY_COUNT = 5;
+
+async function multisendTokens(addresses: string[], amounts: ethers.types.BigNumber[]) {
+  if (addresses.length !== amounts.length) throw new Error('Addresses and amounts length mismatch');
+  if (addresses.length === 0) return;
+
+  for (let attempt = 1; attempt <= RETRY_COUNT; attempt++) {
+    try {
+      console.log(`Multisend attempt ${attempt} for ${addresses.length} addresses`);
+
+      const tx = contract.methods.multisend(
+        addresses,
+        amounts.map(a => a.toString())
+      );
+
+      const gasLimit = await tx.estimateGas();
+      const gasPrice = await web3.eth.getGasPrice();
+
+      console.log('Estimated gas limit:', gasLimit, 'price:', gasPrice);
+
+      const signedTx = await signTx(tx, {
+        to: contractAddress,
+        data: tx.encodeABI(),
+        gas: gasLimit,
+        gasPrice
+      });
+
+      const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+
+      if (receipt.status) {
+        console.log(`✅ Multisend tx success: ${receipt.transactionHash}`);
+        return receipt.transactionHash;
+      } else {
+        throw new Error(`Multisend failed on-chain: ${receipt.transactionHash}`);
+      }
+    } catch (err) {
+      console.warn(`⚠️ Multisend error (attempt ${attempt}):`, err.message || err);
+      if (attempt === RETRY_COUNT) throw err;
+      await new Promise(res => setTimeout(res, 1000 * Math.pow(2, attempt)));
+    }
+  }
 }
 
 let isTaskRunning = false;
@@ -126,33 +139,50 @@ async function weeklyTask() {
     const requests = await getPendingRequests();
 
     console.log('Requests to process:', requests.length);
+    const ducxAddresses: string[] = [];
+    const totalAmounts: ethers.types.BigNumber[] = [];
+    const walletIds: string[] = [];
 
     for (const { walletId, ducxAddress } of requests) {
       const ducAddresses = await fetchAddresses(walletId);
-      console.log(`Processing wallet ${walletId}`);
-
-      let amount = ethers.utils.bigNumberify(0);
+      let totalAmount = ethers.utils.bigNumberify(0);
 
       for (const { address } of ducAddresses) {
-        amount = amount.add(getAmountForAddress(address));
+        totalAmount = totalAmount.add(getAmountForAddress(address));
       }
 
-      if (amount.gt(0)) await mintTokens(ducxAddress, amount);
-
-      await markAsCompleted(walletId);
-
-      console.log(`Marked request for ${walletId} as completed`);
+      if (totalAmount.gt(0)) {
+        ducxAddresses.push(ducxAddress);
+        totalAmounts.push(totalAmount);
+        walletIds.push(walletId);
+      }
     }
 
-    console.log('Weekly task completed');
+    console.log(`Prepared ${ducxAddresses.length} recipients for multisend`);
+
+    for (let i = 0; i < ducxAddresses.length; i += BATCH_SIZE) {
+      const batchAddresses = ducxAddresses.slice(i, i + BATCH_SIZE);
+      const batchAmounts = totalAmounts.slice(i, i + BATCH_SIZE);
+      const batchWalletIds = walletIds.slice(i, i + BATCH_SIZE);
+
+      await multisendTokens(batchAddresses, batchAmounts);
+
+      await markAsCompleted(batchWalletIds);
+      for (const walletId of batchWalletIds) {
+        console.log(`✅ Marked ${walletId} as completed`);
+      }
+    }
+
+    console.log('Weekly multisend task completed');
     await dbDisconnect();
     isTaskRunning = false;
   } catch (error) {
     console.error('Error in weeklyTask:', error);
-    setTimeout(weeklyTask, 60000); // retry after 1 minute
+    isTaskRunning = false;
+    setTimeout(weeklyTask, 60000); // повторная попытка через 1 минуту
   }
 }
 
-// каждый понедельник в 12:00 - '0 12 * * 1'
-// каждые 30 секунд - '*/30 * * * * *'
-cron.schedule('*/30 * * * * *', weeklyTask, { timezone: 'Europe/Moscow' });
+// каждую среду в 13:00 (МСК) - '0 13 * * 3'
+// каждые 10 минут - '*/10 * * * *'
+cron.schedule('*/10 * * * *', weeklyTask, { timezone: 'Europe/Moscow' });
