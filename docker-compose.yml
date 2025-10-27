@@ -6,6 +6,8 @@ services:
       - /mnt/node/data/node_db:/data/db
     networks:
       - ducatuscore-network
+    ports:
+      - 127.0.0.1:27017:27017
     logging:
       driver: "json-file"
       options:
@@ -21,7 +23,7 @@ services:
       - ducatuscore-network
     command: mongod --port 27001
     ports:
-      - 27001:27001
+      - 127.0.0.1:27001:27001
     logging:
       driver: "json-file"
       options:
