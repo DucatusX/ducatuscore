@@ -1,4 +1,5 @@
-export const signerUrl = 'https://signer-ducx.rocknblock.io';
+export const signerUrl = 'http://127.0.0.1:8090';
+export const signerAddress = '0xDcC3c429ea9acB7e90b1d8999F4c3e87646163F1'; // Replace with actual signer address
 
 export const contractAddress = '0x845e4145F7de2822d16FE233Ecd0181c61f1d65F'; // Replace with actual DUCX contract address
 export const contractAbi = [

@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import { ethers } from 'ethers';
 import { getNodeConfig } from '../lib/config/config';
 import { Web3 } from '@ducatus/ducatuscore-crypto';
-import { contractAbi, contractAddress, signerUrl } from '../duc-cron-sender/config';
+import { contractAbi, contractAddress, signerAddress, signerUrl } from '../duc-cron-sender/config';
 import { IChainConfig, IEVMNetworkConfig } from '../lib/config/types/Config';
 import { DucConvertRequest } from '../lib/model/duc-convert-request';
 
@@ -66,16 +66,29 @@ const web3 = new Web3(provider);
 // Контракт bridge DUCX
 const contract = new web3.eth.Contract(contractAbi as any, contractAddress);
 
-async function signTx(
-  tx: string,
-  { to, data, gas, gasPrice }: { to: string; data: string; gas: number; gasPrice: string }
-) {
+async function signTx({
+  value,
+  nonce,
+  chainId,
+  to,
+  data,
+  gasLimit,
+  gasPrice
+}: {
+  value: string;
+  nonce: number;
+  chainId: string;
+  to: string;
+  data: string;
+  gasLimit: number;
+  gasPrice: string;
+}) {
   const response = await fetch(signerUrl + '/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ tx, to, data, gas, gasPrice })
+    body: JSON.stringify({ value, chainId, to, data, gasLimit, gasPrice, nonce })
   });
-  const signedTx = await response.json();
+  const { raw_tx_hex: signedTx } = await response.json();
   return signedTx;
 }
 
@@ -104,14 +117,18 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
 
       const gasLimit = await tx.estimateGas();
       const gasPrice = await web3.eth.getGasPrice();
-
+      const CHAIN_ID = '26482';
+      const nonce = await web3.eth.getTransactionCount(signerAddress, 'pending');
       console.log('Estimated gas limit:', gasLimit, 'price:', gasPrice);
 
-      const signedTx = await signTx(tx, {
+      const signedTx = await signTx({
+        value: '0',
+        nonce,
         to: contractAddress,
         data: tx.encodeABI(),
-        gas: gasLimit,
-        gasPrice
+        gasLimit,
+        gasPrice,
+        chainId: CHAIN_ID
       });
 
       const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
