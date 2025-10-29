@@ -171,6 +171,7 @@ async function weeklyTask() {
         ducxAddresses.push(ducxAddress);
         totalAmounts.push(totalAmount);
         walletIds.push(walletId);
+      } else {
         await markAsCompleted([walletId]);
         console.log(`✅ Mark ${walletId} as completed`);
       }
