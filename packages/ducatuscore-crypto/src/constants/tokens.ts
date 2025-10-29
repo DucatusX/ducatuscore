@@ -157,6 +157,12 @@ export let DUCX_TOKEN_OPTS = {
     symbol: 'X-GEN',
     decimals: 18,
     address: '0x4860903C09F330613A2A3A3e05587176d6DF6B23'
+  },
+  '0x5Dc383A282E8Ed1280D781EE0547616a737e39B2_d': {
+    name: 'Ducatus',
+    symbol: 'DUC',
+    decimals: 8,
+    address: '0x5Dc383A282E8Ed1280D781EE0547616a737e39B2'
   }
 };
 
