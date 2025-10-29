@@ -6,7 +6,7 @@ import { promisify } from 'util';
 import { ethers } from 'ethers';
 import { getNodeConfig } from '../lib/config/config';
 import { Web3 } from '@ducatus/ducatuscore-crypto';
-import { contractAbi, contractAddress, signerAddress, signerUrl } from '../duc-cron-sender/config';
+import { contractAbi, contractAddress, NETWORK_TYPE, signerAddress, signerUrl } from '../duc-cron-sender/config';
 import { IChainConfig, IEVMNetworkConfig } from '../lib/config/types/Config';
 import { DucConvertRequest } from '../lib/model/duc-convert-request';
 
@@ -48,8 +48,6 @@ const markAsCompleted = promisify(db.markDucConvertRequestsAsCompleted.bind(db))
   walletIds: string[]
 ) => Promise<void>;
 
-const NETWORK_TYPE: 'mainnet' | 'testnet' = 'testnet';
-
 const peerData = ((getNodeConfig() as unknown) as IChainConfig<IEVMNetworkConfig>)?.chains['DUCX']?.[NETWORK_TYPE]
   ?.providers[1];
 if (!peerData) throw new Error(`DUCX ${NETWORK_TYPE} config not found`);
@@ -83,11 +81,13 @@ async function signTx({
   gasLimit: number;
   gasPrice: string;
 }) {
+  const body = JSON.stringify({ value, chainId, to, data, gasLimit, gasPrice, nonce });
   const response = await fetch(signerUrl + '/sign', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ value, chainId, to, data, gasLimit, gasPrice, nonce })
+    body
   });
+
   const { raw_tx_hex: signedTx } = await response.json();
   return signedTx;
 }
@@ -95,7 +95,7 @@ async function signTx({
 function getAmountForAddress(address: string) {
   const balance = balanceByAddress[address] ?? ethers.utils.bigNumberify(0);
   const deposit = depositsByAddress[address] ?? ethers.utils.bigNumberify(0);
-  console.log(`Amounts for address ${address}: balance: ${balance}, deposit: ${deposit}`);
+  // console.log(`Amounts for address ${address}: balance: ${balance}, deposit: ${deposit}`);
   return balance.add(deposit);
 }
 
@@ -114,8 +114,7 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
         addresses,
         amounts.map(a => a.toString())
       );
-
-      const gasLimit = await tx.estimateGas();
+      const gasLimit = await tx.estimateGas({ from: signerAddress });
       const gasPrice = await web3.eth.getGasPrice();
       const CHAIN_ID = '26482';
       const nonce = await web3.eth.getTransactionCount(signerAddress, 'pending');
@@ -131,7 +130,9 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
         chainId: CHAIN_ID
       });
 
-      const receipt = await web3.eth.sendSignedTransaction(signedTx.rawTransaction);
+      console.log(signedTx);
+
+      const receipt = await web3.eth.sendSignedTransaction(signedTx);
 
       if (receipt.status) {
         console.log(`✅ Multisend tx success: ${receipt.transactionHash}`);
@@ -140,7 +141,7 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
         throw new Error(`Multisend failed on-chain: ${receipt.transactionHash}`);
       }
     } catch (err) {
-      console.warn(`⚠️ Multisend error (attempt ${attempt}):`, err.message || err);
+      console.warn(`⚠️ Multisend error (attempt ${attempt}):`, err);
       if (attempt === RETRY_COUNT) throw err;
       await new Promise(res => setTimeout(res, 1000 * Math.pow(2, attempt)));
     }
@@ -186,7 +187,7 @@ async function weeklyTask() {
 
       await markAsCompleted(batchWalletIds);
       for (const walletId of batchWalletIds) {
-        console.log(`✅ Marked ${walletId} as completed`);
+        console.log(`✅ Mark ${walletId} as completed`);
       }
     }
 
@@ -202,4 +203,5 @@ async function weeklyTask() {
 
 // каждую среду в 13:00 (МСК) - '0 13 * * 3'
 // каждые 10 минут - '*/10 * * * *'
-cron.schedule('*/10 * * * *', weeklyTask, { timezone: 'Europe/Moscow' });
+// каждые 30 секунд - '*/30 * * * * *'
+cron.schedule('*/30 * * * * *', weeklyTask, { timezone: 'Europe/Moscow' });
