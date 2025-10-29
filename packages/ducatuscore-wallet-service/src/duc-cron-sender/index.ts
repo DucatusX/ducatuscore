@@ -130,8 +130,6 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
         chainId: CHAIN_ID
       });
 
-      console.log(signedTx);
-
       const receipt = await web3.eth.sendSignedTransaction(signedTx);
 
       if (receipt.status) {
