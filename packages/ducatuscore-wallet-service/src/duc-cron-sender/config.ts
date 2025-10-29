@@ -1,6 +1,7 @@
-export const NETWORK_TYPE: 'mainnet' | 'testnet' = 'testnet';
-export const signerUrl = 'http://127.0.0.1:8090/api/v1';
-export const signerAddress = '0xDcC3c429ea9acB7e90b1d8999F4c3e87646163F1'; // Replace with actual signer address
+type NetworkType = 'mainnet' | 'testnet';
+export const NETWORK_TYPE: NetworkType = (process.env.NETWORK_TYPE as NetworkType) || 'mainnet';
+export const signerUrl = process.env.SIGNER_URL || 'http://host.docker.internal:8090/api/v1';
+export const signerAddress = process.env.SIGNER_ADDRESS || '0xDcC3c429ea9acB7e90b1d8999F4c3e87646163F1';
 
 export const contractAddress = '0x845e4145F7de2822d16FE233Ecd0181c61f1d65F'; // Replace with actual DUCX contract address
 export const contractAbi = [
