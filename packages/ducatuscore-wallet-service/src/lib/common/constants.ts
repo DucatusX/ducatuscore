@@ -171,5 +171,5 @@ export const Constants = {
   } as { [chain: string]: { [network: string]: number } }
 };
 
-export const DUC_BLOCKCHAIN_CLOSE_DATE = Date.UTC(2025, 10, 3, 10);
+export const DUC_BLOCKCHAIN_CLOSE_DATE = Date.UTC(2025, 10, 5, 9);
 export const DUC_REQUEST_PROCESSING_WEEKDAY = 3; // (0=вс, 1=пн, 2=вт, 3=ср, ...)
