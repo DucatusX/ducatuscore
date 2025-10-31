@@ -203,6 +203,4 @@ async function weeklyTask() {
 }
 
 // каждую среду в 13:00 (МСК) - '0 13 * * 3'
-// каждые 10 минут - '*/10 * * * *'
-// каждые 30 секунд - '*/30 * * * * *'
-cron.schedule('*/30 * * * * *', weeklyTask, { timezone: 'Europe/Moscow' });
+cron.schedule('0 13 * * 3', weeklyTask, { timezone: 'Europe/Moscow' });
