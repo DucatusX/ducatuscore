@@ -66,6 +66,8 @@ services:
       - DUCX_NODE_URL=${DUCX_NODE_URL:-node:3000}
     working_dir: /ducatuscore/packages/ducatuscore-wallet-service
     entrypoint: ["yarn", "start"]
+    stdin_open: true
+    tty: true
     logging:
       driver: "json-file"
       options:

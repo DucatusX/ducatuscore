@@ -9,6 +9,7 @@ import { Web3 } from '@ducatus/ducatuscore-crypto';
 import { contractAbi, contractAddress, NETWORK_TYPE, signerAddress, signerUrl } from '../duc-cron-sender/config';
 import { IChainConfig, IEVMNetworkConfig } from '../lib/config/types/Config';
 import { DucConvertRequest } from '../lib/model/duc-convert-request';
+import readline from 'readline';
 
 const config = require('../config');
 const storeConfig = config.storageOpts;
@@ -204,3 +205,20 @@ async function weeklyTask() {
 
 // каждую среду в 13:00 (МСК) - '0 13 * * 3'
 cron.schedule('0 13 * * 3', weeklyTask, { timezone: 'Europe/Moscow' });
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+const commands = {
+  ducsend: () => console.log('testttt)')
+};
+
+rl.on('line', line => {
+  const [cmd, ...args] = line.trim().split(' ');
+  const fn = commands[cmd];
+  if (fn) fn(...args);
+  else console.log('Unknown command');
+  rl.prompt();
+});

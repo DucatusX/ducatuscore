@@ -33,6 +33,7 @@ function runScript(script) {
 
   node.stdout.on('data', data => console.log(`\x1b[35m${scriptName} \x1b[0m| ${data}`));
   node.stderr.on('data', data => console.error(`\x1b[31m${scriptName} \x1b[0m| ${data}`));
+  process.stdin.pipe(node.stdin);
 
   node.on('close', code => {
     if (code === 0) {
