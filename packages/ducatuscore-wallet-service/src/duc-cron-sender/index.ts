@@ -212,7 +212,7 @@ const rl = readline.createInterface({
 });
 
 const commands = {
-  ducsend: () => console.log('testttt)')
+  ducsend: weeklyTask
 };
 
 rl.on('line', line => {
