@@ -131,6 +131,13 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
         chainId: CHAIN_ID
       });
 
+      try {
+        const recovered = web3.eth.accounts.recoverTransaction(signedTx);
+        console.log('Recovered signer from signedTx:', recovered, 'expected:', signerAddress);
+      } catch (e) {
+        console.error('Failed to recover signer from signedTx:', e);
+      }
+
       const receipt = await web3.eth.sendSignedTransaction(signedTx);
 
       if (receipt.status) {
