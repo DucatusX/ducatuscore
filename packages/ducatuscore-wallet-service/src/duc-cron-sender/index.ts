@@ -117,7 +117,7 @@ async function multisendTokens(addresses: string[], amounts: ethers.types.BigNum
       );
       const gasLimit = await tx.estimateGas({ from: signerAddress });
       const gasPrice = await web3.eth.getGasPrice();
-      const CHAIN_ID = '26482';
+      const CHAIN_ID = '26483';
       const nonce = await web3.eth.getTransactionCount(signerAddress, 'pending');
       console.log('Estimated gas limit:', gasLimit, 'price:', gasPrice);
 
