@@ -42,14 +42,14 @@ import { EVMListTransactionsStream } from './transform';
 
 export class BaseEVMStateProvider extends InternalStateProvider implements IChainStateService {
   config: IChainConfig<IEVMNetworkConfig>;
-  static rpcs = {} as { [chain: string]: { [network: string]: { rpc: CryptoRpc; web3: Web3 } } };
+  static rpcs = {} as { [chain: string]: { [network: string]: { rpc: typeof CryptoRpc; web3: Web3 } } };
 
   constructor(public chain: string = 'ETH') {
     super(chain);
     this.config = Config.chains[this.chain] as IChainConfig<IEVMNetworkConfig>;
   }
 
-  async getWeb3(network: string): Promise<{ rpc: CryptoRpc; web3: Web3 }> {
+  async getWeb3(network: string): Promise<{ rpc: typeof CryptoRpc; web3: Web3 }> {
     try {
       if (BaseEVMStateProvider.rpcs[this.chain] && BaseEVMStateProvider.rpcs[this.chain][network]) {
         await BaseEVMStateProvider.rpcs[this.chain][network].web3.eth.getBlockNumber();
@@ -62,7 +62,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       const providerIdx = worker.threadId % (this.config[network].providers || []).length;
       const providerConfig = this.config[network].provider || this.config[network].providers![providerIdx];
       const rpcConfig = { ...providerConfig, chain: this.chain, currencyConfig: {} };
-      const rpc = new CryptoRpc(rpcConfig, {}).get(this.chain);
+      const rpc = new CryptoRpc(rpcConfig).get(this.chain);
       if (BaseEVMStateProvider.rpcs[this.chain]) {
         BaseEVMStateProvider.rpcs[this.chain][network] = { rpc, web3: rpc.web3 };
       } else {
@@ -116,24 +116,24 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       cacheKey,
       async () => {
         const txs = await EVMTransactionStorage.collection
-        .find({ chain, network, blockHeight: { $gt: 0 } })
-        .project({ gasPrice: 1, blockHeight: 1 })
-        .sort({ blockHeight: -1 })
-        .limit(20 * 200)
-        .toArray();
+          .find({ chain, network, blockHeight: { $gt: 0 } })
+          .project({ gasPrice: 1, blockHeight: 1 })
+          .sort({ blockHeight: -1 })
+          .limit(20 * 200)
+          .toArray();
 
-      const blockGasPrices = txs
-        .map(tx => Number(tx.gasPrice))
-        .filter(gasPrice => gasPrice)
-        .sort((a, b) => b - a);
+        const blockGasPrices = txs
+          .map(tx => Number(tx.gasPrice))
+          .filter(gasPrice => gasPrice)
+          .sort((a, b) => b - a);
 
-      const whichQuartile = Math.min(target, 4) || 1;
-      const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
+        const whichQuartile = Math.min(target, 4) || 1;
+        const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
 
-      const roundedGwei = (quartileMedian / 1e9).toFixed(2);
-      const gwei = Number(roundedGwei) || 0;
-      const feerate = gwei * 1e9;
-      return { feerate, blocks: target };
+        const roundedGwei = (quartileMedian / 1e9).toFixed(2);
+        const gwei = Number(roundedGwei) || 0;
+        const feerate = gwei * 1e9;
+        return { feerate, blocks: target };
       },
       CacheStorage.Times.Minute
     );
@@ -500,7 +500,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
           // Gas estimation might fail with `insufficient funds` if value is higher than balance for a normal send.
           // We want this method to give a blind fee estimation, though, so we should not include the value
           // unless it's needed for estimating smart contract execution.
-          _value = web3.utils.toHex(value)
+          _value = web3.utils.toHex(value);
         }
 
         const opts = {

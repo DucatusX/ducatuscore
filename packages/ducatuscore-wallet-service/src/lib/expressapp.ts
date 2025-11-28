@@ -1356,43 +1356,43 @@ export class ExpressApp {
     });
 
     // DEPRECATED
-    router.post('/v1/pushnotifications/subscriptions/', (req, res) => {
-      getServerWithAuth(req, res, server => {
-        server.pushNotificationsSubscribe(req.body, (err, response) => {
-          if (err) return returnError(err, res, req);
-          res.json(response);
-        });
-      });
-    });
+    // router.post('/v1/pushnotifications/subscriptions/', (req, res) => {
+    //   getServerWithAuth(req, res, server => {
+    //     server.pushNotificationsSubscribe(req.body, (err, response) => {
+    //       if (err) return returnError(err, res, req);
+    //       res.json(response);
+    //     });
+    //   });
+    // });
 
     // DEPRECATED
-    router.delete('/v1/pushnotifications/subscriptions/', (req, res) => {
-      logDeprecated(req);
-      getServerWithAuth(req, res, server => {
-        server.pushNotificationsUnsubscribe(
-          {
-            token: 'dummy'
-          },
-          (err, response) => {
-            if (err) return returnError(err, res, req);
-            res.json(response);
-          }
-        );
-      });
-    });
+    // router.delete('/v1/pushnotifications/subscriptions/', (req, res) => {
+    //   logDeprecated(req);
+    //   getServerWithAuth(req, res, server => {
+    //     server.pushNotificationsUnsubscribe(
+    //       {
+    //         token: 'dummy'
+    //       },
+    //       (err, response) => {
+    //         if (err) return returnError(err, res, req);
+    //         res.json(response);
+    //       }
+    //     );
+    //   });
+    // });
 
     // DEPRECATED
-    router.delete('/v2/pushnotifications/subscriptions/:token', (req, res) => {
-      const opts = {
-        token: req.params['token']
-      };
-      getServerWithAuth(req, res, server => {
-        server.pushNotificationsUnsubscribe(opts, (err, response) => {
-          if (err) return returnError(err, res, req);
-          res.json(response);
-        });
-      });
-    });
+    // router.delete('/v2/pushnotifications/subscriptions/:token', (req, res) => {
+    //   const opts = {
+    //     token: req.params['token']
+    //   };
+    //   getServerWithAuth(req, res, server => {
+    //     server.pushNotificationsUnsubscribe(opts, (err, response) => {
+    //       if (err) return returnError(err, res, req);
+    //       res.json(response);
+    //     });
+    //   });
+    // });
 
     router.post('/v1/txconfirmations/', (req, res) => {
       getServerWithAuth(req, res, server => {
