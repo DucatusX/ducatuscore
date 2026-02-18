@@ -56,7 +56,13 @@ export const Constants = {
     'mpe',
     'balisol',
     'x-gen',
-    'bnb'
+    'bnb',
+    'bult',
+    'shgen',
+    'shres',
+    'shbt',
+    'natv',
+    'spad'
   ],
 
   DUCATUSCORE_SUPPORTED_ETH_ERC20: [
@@ -88,7 +94,13 @@ export const Constants = {
     'QMN',
     'mpe',
     'balisol',
-    'x-gen'
+    'x-gen',
+    'bult',
+    'shgen',
+    'shres',
+    'shbt',
+    'natv',
+    'spad'
   ],
 
   CHAINS: ['btc', 'bch', 'eth', 'duc', 'ducx', 'xrp', 'bnb'],

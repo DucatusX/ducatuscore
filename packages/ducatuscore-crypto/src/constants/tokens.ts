@@ -163,7 +163,43 @@ export let DUCX_TOKEN_OPTS = {
     symbol: 'DUC',
     decimals: 8,
     address: '0xC98983b0E68507EFebA531E4714419cd271114a1'
-  }
+  },
+  '0xD0A83Ff11CB82798933522dC8B7dB89d05995956_d': {
+    name: 'Bullion Token',
+    symbol: 'BULT',
+    decimals: 5,
+    address: '0xD0A83Ff11CB82798933522dC8B7dB89d05995956',
+  },
+  '0x0FB410280F80cf3f22Fc1Cf18Ea3bcca25aC0daE_d': {
+    name: 'Spirit Hills Genesis',
+    symbol: 'SHGEN',
+    decimals: 5,
+    address: '0x0FB410280F80cf3f22Fc1Cf18Ea3bcca25aC0daE',
+  },
+  '0x33a5f694bf84A9d003141956E7E20b95410bDf8d_d': {
+    name: 'Spirit Hills Reserve',
+    symbol: 'SHRES',
+    decimals: 5,
+    address: '0x33a5f694bf84A9d003141956E7E20b95410bDf8d',
+  },
+  '0xe8F622F26461FC21EC06eC2158B82500e9C77Dff_d': {
+    name: 'Spirit Hills Bali Token',
+    symbol: 'SHBT',
+    decimals: 5,
+    address: '0xe8F622F26461FC21EC06eC2158B82500e9C77Dff',
+  },
+  '0x9bb7E02ca6c8A91893E49F2e5D5f66E2878cc9A9': {
+    name: 'NatVenture',
+    symbol: 'NATV',
+    decimals: 5,
+    address: '0x9bb7E02ca6c8A91893E49F2e5D5f66E2878cc9A9',
+  },
+  '0x911B487197f632BFF1Fbc625aD38C2e2EffB817a': {
+    name: 'SLC Padel',
+    symbol: 'SPAD',
+    decimals: 5,
+    address: '0x911B487197f632BFF1Fbc625aD38C2e2EffB817a',
+  },
 };
 
 export let BNB_TOKEN_OPTS = {

@@ -385,4 +385,70 @@ export let UNITS = {
       minDecimals: 2
     }
   },
+  'bult': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
+  'shgen': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
+  'shres': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
+  'shbt': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
+  'natv': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
+  'spad': {
+    toSatoshis: 1e5,
+    full: {
+      maxDecimals: 5,
+      minDecimals: 5
+    },
+    short: {
+      maxDecimals: 5,
+      minDecimals: 2
+    }
+  },
 };
