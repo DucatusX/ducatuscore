@@ -5,4 +5,4 @@ var spec = {
   message: 'Internal Error on ducatuscore-p2p-duc Module {0}'
 };
 
-module.exports = require('@ducatus/ducatuscore-lib-duc').errors.extend(spec);
+module.exports = require('@ducatuscore/lib-duc').errors.extend(spec);

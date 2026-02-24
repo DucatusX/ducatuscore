@@ -1,6 +1,6 @@
 # Ducatuscore Lib Cash
 
-**A pure and powerful JavaScript Bitcoin *Cash* library.**
+**A pure and powerful JavaScript Bitcoin _Cash_ library.**
 
 ## Principles
 
@@ -20,7 +20,7 @@ Adding Ducatuscore Cash to your app's `package.json`:
 
 ```json
 "dependencies": {
-    "@ducatus/ducatuscore-lib-cash": "10.0.0",
+    "@ducatuscore/lib-cash": "10.0.0",
     ...
 }
 ```

@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 var utils = require('../utils');
 var $ = ducatuscore.util.preconditions;
 var _ = ducatuscore.deps._;
@@ -21,9 +21,9 @@ function AddrMessage(arg, options) {
   $.checkArgument(
     _.isUndefined(arg) ||
       (Array.isArray(arg) &&
-       !_.isUndefined(arg[0].services) &&
-       !_.isUndefined(arg[0].ip) &&
-       !_.isUndefined(arg[0].port)),
+        !_.isUndefined(arg[0].services) &&
+        !_.isUndefined(arg[0].ip) &&
+        !_.isUndefined(arg[0].port)),
     'First argument is expected to be an array of addrs'
   );
   this.addresses = arg;

@@ -3,7 +3,7 @@ sudo: false
 node_js:
 - '8'
 install:
-  - npm install @ducatus/ducatuscore-lib
+  - npm install @ducatuscore/lib
   - npm ci
 after_script:
   - gulp coveralls

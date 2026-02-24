@@ -1,24 +1,24 @@
 'use strict';
-import * as CWC from '@ducatus/ducatuscore-crypto';
+import * as CWC from '@ducatuscore/crypto';
 
 export const Constants = {
   SCRIPT_TYPES: {
     P2SH: 'P2SH',
     P2PKH: 'P2PKH',
     P2WPKH: 'P2WPKH',
-    P2WSH: 'P2WSH'
+    P2WSH: 'P2WSH',
   },
   // not used, since Credentials 2.0
   DERIVATION_STRATEGIES: {
     BIP44: 'BIP44',
     BIP45: 'BIP45',
-    BIP48: 'BIP48'
+    BIP48: 'BIP48',
   },
   PATHS: {
     SINGLE_ADDRESS: 'm/0/0',
     REQUEST_KEY: "m/1'/0",
     //  TXPROPOSAL_KEY: "m/1'/1",
-    REQUEST_KEY_AUTH: 'm/2' // relative to BASE
+    REQUEST_KEY_AUTH: 'm/2', // relative to BASE
   },
   BIP45_SHARED_INDEX: 0x80000000 - 1,
 
@@ -62,7 +62,7 @@ export const Constants = {
     'shres',
     'shbt',
     'natv',
-    'spad'
+    'spad',
   ],
 
   DUCATUSCORE_SUPPORTED_ETH_ERC20: [
@@ -77,7 +77,7 @@ export const Constants = {
     'euroc',
     'usdt',
     'matic',
-    'bnb'
+    'bnb',
   ],
   DUCATUSCORE_SUPPORTED_DUCX_ERC20: [
     'jamasy',
@@ -100,7 +100,7 @@ export const Constants = {
     'shres',
     'shbt',
     'natv',
-    'spad'
+    'spad',
   ],
 
   CHAINS: ['btc', 'bch', 'eth', 'duc', 'ducx', 'xrp', 'bnb'],
@@ -113,7 +113,7 @@ export const Constants = {
   EVM_CHAINSUFFIXMAP: {
     eth: 'e',
     ducx: 'd',
-    bnb: 'b'
+    bnb: 'b',
   },
   BTC_URL: 'https://api.bitcore.io',
   MAX_MAIN_ADDRESS_GAP: 20,

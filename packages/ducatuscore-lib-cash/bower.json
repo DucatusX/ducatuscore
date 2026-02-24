@@ -1,5 +1,5 @@
 {
-  "name": "@ducatus/ducatuscore-lib",
+  "name": "@ducatuscore/lib",
   "main": "./ducatuscore-lib.min.js",
   "version": "10.0.0",
   "description": "A pure, powerful core for your bitcoin project.",

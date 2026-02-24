@@ -9,7 +9,6 @@ A PublicKey in Ducatuscore is an immutable object and can be instantiated from a
 Here is how to instantiate a public key:
 
 ```javascript
-
 var privateKey = new PrivateKey();
 
 // from a private key
@@ -24,7 +23,7 @@ var publicKey2 = new PublicKey('02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ea
 A public key point should be on the [secp256k1](https://en.bitcoin.it/wiki/Secp256k1) curve, instantiating a new PublicKey will validate this and will throw an error if it's invalid. To check that a public key is valid:
 
 ```javascript
-if (PublicKey.isValid('02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5dc')){
+if (PublicKey.isValid('02a1633cafcc01ebfb6d78e39f687a1f0995c62fc95f51ead10a02ee0be551b5dc')) {
   // valid public key
 }
 ```
@@ -36,7 +35,7 @@ It's important to note that there are two possible ways to represent a public ke
 Example:
 
 ```javascript
-> var ducatuscore = require('@ducatus/ducatuscore-lib');
+> var ducatuscore = require('@ducatuscore/lib');
 
 // compressed public key starting with 0x03 (greater than midpoint of curve)
 > var compressedPK = ducatuscore.PublicKey('030589ee559348bd6a7325994f9c8eff12bd'+

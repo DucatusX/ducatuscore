@@ -1,4 +1,4 @@
-import { Validation } from '@ducatus/ducatuscore-crypto';
+import { Validation } from '@ducatuscore/crypto';
 import { Request, Response, Router } from 'express';
 import { ChainStateProvider } from '../../providers/chain-state';
 import { StreamWalletAddressesParams } from '../../types/namespaces/ChainStateProvider';
@@ -21,11 +21,11 @@ router.post('/', async function(req: Request, res: Response) {
     });
     if (existingWallet) {
       res.status(200).send('Wallet already exists');
-      return
+      return;
     }
     if (isTooLong(name) || isTooLong(pubKey) || isTooLong(path) || isTooLong(singleAddress)) {
       res.status(413).send('String length exceeds limit');
-      return
+      return;
     }
     let result = await ChainStateProvider.createWallet({
       chain,

@@ -1,4 +1,4 @@
-import DucatuscoreLib from '@ducatus/ducatuscore-lib';
+import DucatuscoreLib from '@ducatuscore/lib';
 import rippleKeypairs from 'ripple-keypairs';
 import { IDeriver } from '..';
 

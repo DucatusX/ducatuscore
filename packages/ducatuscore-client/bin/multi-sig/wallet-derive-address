@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const CWC = require('@ducatus/ducatuscore-crypto');
+const CWC = require('@ducatuscore/crypto');
 const program = require('commander');
 const { Wallet } = require('../../ts_build/wallet');
 const promptly = require('promptly');
@@ -50,13 +50,13 @@ function getAddress(publicKeyRing, addressIndex, isChange, m, network, currency)
     let path = key.path ? key.path : `m/${changeNum}/${addressIndex}`;
     if (key.path) {
       let split = path.split('/');
-      split[split.length -1] = Number(split[split.length - 1]) + addressIndex;
+      split[split.length - 1] = Number(split[split.length - 1]) + addressIndex;
       path = split.join('/');
     }
     if (isChange && key.changePath) {
-      path = key.changePath
+      path = key.changePath;
       let split = path.split('/');
-      split[split.length -1] = Number(split[split.length - 1]) + addressIndex;
+      split[split.length - 1] = Number(split[split.length - 1]) + addressIndex;
       path = split.join('/');
     }
     return xpub.derive(path).publicKey;
@@ -95,7 +95,7 @@ async function readFromPrompt() {
 async function importAddressesToWallet(path, addresses) {
   const password = await promptly.password('Wallet Password:');
   if (!password) {
-    throw new Error('No password provided. Keys can\'t be imported without unlocking the wallet');
+    throw new Error("No password provided. Keys can't be imported without unlocking the wallet");
   }
   let wallet = await Wallet.loadWallet({ path });
   wallet = await wallet.unlock(password);

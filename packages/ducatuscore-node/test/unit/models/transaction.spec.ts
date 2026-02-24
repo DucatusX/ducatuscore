@@ -9,7 +9,7 @@ import { BitcoinTransaction, TransactionInput } from '../../../src/types/namespa
 import { TransactionFixture } from '../../fixtures/transaction.fixture';
 import { mockStorage } from '../../helpers';
 import { unitAfterHelper, unitBeforeHelper } from '../../helpers/unit';
-const ducatuscoreLib = require('@ducatus/ducatuscore-lib');
+const ducatuscoreLib = require('@ducatuscore/lib');
 
 describe('Transaction Model', function() {
   before(unitBeforeHelper);

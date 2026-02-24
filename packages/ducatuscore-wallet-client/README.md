@@ -1,6 +1,6 @@
 # ducatuscore-wallet-client
 
-The *official* client library for ducatuscore-wallet-service
+The _official_ client library for ducatuscore-wallet-service
 
 ## Description
 
@@ -10,7 +10,7 @@ See [Ducatuscore-wallet] (https://google.com) for a simple CLI wallet implementa
 
 ## Get Started
 
-You can start using ducatuscore-wallet-client via [NPM](https://www.npmjs.com/package/@ducatus/ducatuscore-wallet-client): by running `npm install @ducatus/ducatuscore-wallet-client` from your console.
+You can start using ducatuscore-wallet-client via [NPM](https://www.npmjs.com/package/@ducatuscore/wallet-client): by running `npm install @ducatuscore/wallet-client` from your console.
 
 ## Example
 
@@ -20,9 +20,8 @@ Then create two files `irene.js` and `tomas.js` with the content below:
 
 ### **irene.js**
 
-``` javascript
+```javascript
 var Client = require('@ducatusducatuscore-wallet-client');
-
 
 var fs = require('fs');
 var DWS_INSTANCE_URL = 'https://localhost:3232/';
@@ -32,11 +31,11 @@ var client = new Client({
   verbose: false,
 });
 
-client.createWallet("My Wallet", "Irene", 2, 2, {network: 'testnet'}, function(err, secret) {
+client.createWallet('My Wallet', 'Irene', 2, 2, { network: 'testnet' }, function (err, secret) {
   if (err) {
-    console.log('error: ',err);
-    return
-  };
+    console.log('error: ', err);
+    return;
+  }
   // Handle err
   console.log('Wallet Created. Share this secret with your copayers: ' + secret);
   fs.writeFileSync('irene.dat', client.export());
@@ -45,17 +44,15 @@ client.createWallet("My Wallet", "Irene", 2, 2, {network: 'testnet'}, function(e
 
 ### **tomas.js**
 
-``` javascript
-
-var Client = require('@ducatus/ducatuscore-wallet-client');
-
+```javascript
+var Client = require('@ducatuscore/wallet-client');
 
 var fs = require('fs');
 var DWS_INSTANCE_URL = 'https://localhost:3232';
 
 var secret = process.argv[2];
 if (!secret) {
-  console.log('./tomas.js <Secret>')
+  console.log('./tomas.js <Secret>');
 
   process.exit(0);
 }
@@ -65,42 +62,41 @@ var client = new Client({
   verbose: false,
 });
 
-client.joinWallet(secret, "Tomas", {}, function(err, wallet) {
+client.joinWallet(secret, 'Tomas', {}, function (err, wallet) {
   if (err) {
     console.log('error: ', err);
-    return
-  };
+    return;
+  }
 
   console.log('Joined ' + wallet.name + '!');
   fs.writeFileSync('tomas.dat', client.export());
 
-
-  client.openWallet(function(err, ret) {
+  client.openWallet(function (err, ret) {
     if (err) {
       console.log('error: ', err);
-      return
-    };
+      return;
+    }
     console.log('\n\n** Wallet Info', ret); //TODO
 
     console.log('\n\nCreating first address:', ret); //TODO
     if (ret.wallet.status == 'complete') {
-      client.createAddress({}, function(err,addr){
+      client.createAddress({}, function (err, addr) {
         if (err) {
           console.log('error: ', err);
           return;
-        };
+        }
 
-        console.log('\nReturn:', addr)
+        console.log('\nReturn:', addr);
       });
     }
   });
 });
 ```
 
-Install `@ducatus/ducatuscore-wallet-client` before start:
+Install `@ducatuscore/wallet-client` before start:
 
 ```sh
-npm i @ducatus/ducatuscore-wallet-client
+npm i @ducatuscore/wallet-client
 ```
 
 Create a new wallet with the first script:

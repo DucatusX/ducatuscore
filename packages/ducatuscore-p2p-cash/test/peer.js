@@ -10,7 +10,7 @@ var expect = chai.expect;
 var sinon = require('sinon');
 var fs = require('fs');
 
-var ducatuscore = require('@ducatus/ducatuscore-lib-cash');
+var ducatuscore = require('@ducatuscore/lib-cash');
 var _ = ducatuscore.deps._;
 var P2P = require('../');
 var Peer = P2P.Peer;
@@ -20,7 +20,6 @@ var messages = new Messages();
 var Networks = ducatuscore.Networks;
 
 describe('Peer', function() {
-
   describe('Integration test', function() {
     it('parses this stream of data from a connection', function(callback) {
       var peer = new Peer('');
@@ -79,28 +78,28 @@ describe('Peer', function() {
   });
 
   it('create instance setting a port', function() {
-    var peer = new Peer({host: 'localhost', port: 8111});
+    var peer = new Peer({ host: 'localhost', port: 8111 });
     peer.host.should.equal('localhost');
     peer.network.should.equal(Networks.livenet);
     peer.port.should.equal(8111);
   });
 
   it('create instance setting a network', function() {
-    var peer = new Peer({host: 'localhost', network: Networks.testnet});
+    var peer = new Peer({ host: 'localhost', network: Networks.testnet });
     peer.host.should.equal('localhost');
     peer.network.should.equal(Networks.testnet);
     peer.port.should.equal(Networks.testnet.port);
   });
 
   it('create instance setting port and network', function() {
-    var peer = new Peer({host: 'localhost', port: 8111, network: Networks.testnet});
+    var peer = new Peer({ host: 'localhost', port: 8111, network: Networks.testnet });
     peer.host.should.equal('localhost');
     peer.network.should.equal(Networks.testnet);
     peer.port.should.equal(8111);
   });
 
   it('create instance without new', function() {
-    var peer = Peer({host: 'localhost', port: 8111, network: Networks.testnet});
+    var peer = Peer({ host: 'localhost', port: 8111, network: Networks.testnet });
     peer.host.should.equal('localhost');
     peer.network.should.equal(Networks.testnet);
     peer.port.should.equal(8111);
@@ -124,7 +123,7 @@ describe('Peer', function() {
   });
 
   it('send pong on ping', function(done) {
-    var peer = new Peer({host: 'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     var pingMessage = messages.Ping();
     peer.sendMessage = function(message) {
       message.command.should.equal('pong');
@@ -135,7 +134,7 @@ describe('Peer', function() {
   });
 
   it('relay error from socket', function(done) {
-    var peer = new Peer({host: 'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     var socket = new EventEmitter();
     socket.connect = sinon.spy();
     socket.destroy = sinon.spy();
@@ -152,7 +151,7 @@ describe('Peer', function() {
   });
 
   it('will not disconnect twice on disconnect and error', function(done) {
-    var peer = new Peer({host: 'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     var socket = new EventEmitter();
     socket.connect = sinon.stub();
     socket.destroy = sinon.stub();
@@ -216,7 +215,7 @@ describe('Peer', function() {
   });
 
   it('should send version on version if not already sent', function(done) {
-    var peer = new Peer({host:'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     var commands = {};
     peer.sendMessage = function(message) {
       commands[message.command] = true;
@@ -233,7 +232,7 @@ describe('Peer', function() {
   });
 
   it('should not send version on version if already sent', function(done) {
-    var peer = new Peer({host:'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     peer.versionSent = true;
     var commands = {};
     peer.sendMessage = function(message) {
@@ -249,17 +248,17 @@ describe('Peer', function() {
   });
 
   it('relay set properly', function() {
-    var peer = new Peer({host: 'localhost'});
+    var peer = new Peer({ host: 'localhost' });
     peer.relay.should.equal(true);
-    var peer2 = new Peer({host: 'localhost', relay: false});
+    var peer2 = new Peer({ host: 'localhost', relay: false });
     peer2.relay.should.equal(false);
-    var peer3 = new Peer({host: 'localhost', relay: true});
+    var peer3 = new Peer({ host: 'localhost', relay: true });
     peer3.relay.should.equal(true);
   });
 
   it('relay setting respected', function() {
-    [true,false].forEach(function(relay) {
-      var peer = new Peer({host: 'localhost', relay: relay});
+    [true, false].forEach(function(relay) {
+      var peer = new Peer({ host: 'localhost', relay: relay });
       var peerSendMessageStub = sinon.stub(Peer.prototype, 'sendMessage', function(message) {
         message.relay.should.equal(relay);
       });
@@ -291,7 +290,7 @@ describe('Peer', function() {
   });
 
   it('version/subversion settings respected', function(done) {
-  var socket = new EventEmitter();
+    var socket = new EventEmitter();
     var peer = new Peer({
       socket: socket,
       subversion: '/useragent:0.0.0/',

@@ -8,14 +8,14 @@ import { Api } from '../../src/services/api';
 import { Event } from '../../src/services/event';
 import { IUtxoNetworkConfig } from '../../src/types/Config';
 import { resetDatabase } from '../helpers';
-const { PrivateKey } = require('@ducatus/ducatuscore-lib');
+const { PrivateKey } = require('@ducatuscore/lib');
 
 const chain = 'BTC';
 const network = 'regtest';
 const chainConfig = config.chains[chain][network] as IUtxoNetworkConfig;
 const creds = chainConfig.rpc;
 const rpc = new AsyncRPC(creds.username, creds.password, creds.host, creds.port);
-import { Client } from '@ducatus/ducatuscore-client';
+import { Client } from '@ducatuscore/client';
 import { WalletStorage } from '../../src/models/wallet';
 import { WalletAddressStorage } from '../../src/models/walletAddress';
 import { Socket } from '../../src/services/socket';

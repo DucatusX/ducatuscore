@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { Key } from '../../derivation';
 
 export class BTCTxProvider {
-  lib = require('@ducatus/ducatuscore-lib');
+  lib = require('@ducatuscore/lib');
 
   selectCoins(
     recipients: Array<{ amount: number }>,

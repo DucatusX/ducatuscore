@@ -9,15 +9,15 @@ import logger from '../logger';
 import { Client } from './v8/client';
 
 const $ = require('preconditions').singleton();
-const Ducatuscore = require('@ducatus/ducatuscore-lib');
+const Ducatuscore = require('@ducatuscore/lib');
 const Ducatuscore_ = {
   btc: Ducatuscore,
-  bch: require('@ducatus/ducatuscore-lib-cash'),
+  bch: require('@ducatuscore/lib-cash'),
   eth: Ducatuscore,
   xrp: Ducatuscore,
   ducx: Ducatuscore,
   bnb: Ducatuscore,
-  duc: require('@ducatus/ducatuscore-lib-duc')
+  duc: require('@ducatuscore/lib-duc')
 };
 const config = require('../../config');
 const Constants = Common.Constants,

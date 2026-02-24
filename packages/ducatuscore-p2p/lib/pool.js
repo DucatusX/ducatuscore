@@ -2,7 +2,7 @@
 
 var dns = require('dns');
 var EventEmitter = require('events').EventEmitter;
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 var sha256 = ducatuscore.crypto.Hash.sha256;
 var Peer = require('./peer');
 var Networks = ducatuscore.Networks;
@@ -62,7 +62,7 @@ function Pool(options) {
   this.relay = options.relay === false ? false : true;
 
   if (options.addrs) {
-    for(var i = 0; i < options.addrs.length; i++) {
+    for (var i = 0; i < options.addrs.length; i++) {
       this._addAddr(options.addrs[i]);
     }
   }
@@ -73,7 +73,7 @@ function Pool(options) {
       var length = addrs.length;
       for (var i = 0; i < length; i++) {
         var addr = addrs[i];
-        var future = new Date().getTime() + (10 * 60 * 1000);
+        var future = new Date().getTime() + 10 * 60 * 1000;
         if (addr.time.getTime() <= 100000000000 || addr.time.getTime() > future) {
           // In case of an invalid time, assume "5 days ago"
           var past = new Date(new Date().getTime() - 5 * 24 * 60 * 60 * 1000);
@@ -106,16 +106,32 @@ function Pool(options) {
   });
 
   return this;
-
 }
 
 util.inherits(Pool, EventEmitter);
 
 Pool.MaxConnectedPeers = 8;
 Pool.RetrySeconds = 30;
-Pool.PeerEvents = ['version', 'inv', 'getdata', 'ping', 'pong', 'addr',
-  'getaddr', 'verack', 'reject', 'alert', 'headers', 'block', 'merkleblock',
-  'tx', 'getblocks', 'getheaders', 'error', 'filterload', 'filteradd',
+Pool.PeerEvents = [
+  'version',
+  'inv',
+  'getdata',
+  'ping',
+  'pong',
+  'addr',
+  'getaddr',
+  'verack',
+  'reject',
+  'alert',
+  'headers',
+  'block',
+  'merkleblock',
+  'tx',
+  'getblocks',
+  'getheaders',
+  'error',
+  'filterload',
+  'filteradd',
   'filterclear'
 ];
 
@@ -339,10 +355,15 @@ Pool.prototype._addAddrsFromSeeds = function _addAddrsFromSeeds() {
  * @returns {String} A string formatted for the console
  */
 Pool.prototype.inspect = function inspect() {
-  return '<Pool network: ' +
-    this.network + ', connected: ' +
-    this.numberConnected() + ', available: ' +
-    this._addrs.length + '>';
+  return (
+    '<Pool network: ' +
+    this.network +
+    ', connected: ' +
+    this.numberConnected() +
+    ', available: ' +
+    this._addrs.length +
+    '>'
+  );
 };
 
 /**
@@ -351,7 +372,7 @@ Pool.prototype.inspect = function inspect() {
  */
 Pool.prototype.sendMessage = function(message) {
   // broadcast to peers
-  for(var key in this._connectedPeers) {
+  for (var key in this._connectedPeers) {
     var peer = this._connectedPeers[key];
     peer.sendMessage(message);
   }
@@ -369,7 +390,7 @@ Pool.prototype.listen = function() {
     var addr = {
       ip: {}
     };
-    if(net.isIPv6(socket.remoteAddress)) {
+    if (net.isIPv6(socket.remoteAddress)) {
       addr.ip.v6 = socket.remoteAddress;
     } else {
       addr.ip.v4 = socket.remoteAddress;

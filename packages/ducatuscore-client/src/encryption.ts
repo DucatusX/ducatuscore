@@ -1,5 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'crypto';
-const ducatuscore = require('@ducatus/ducatuscore-crypto').DucatuscoreLib;
+const ducatuscore = require('@ducatuscore/crypto').DucatuscoreLib;
 const crypto = {
   createHash,
   createCipheriv,

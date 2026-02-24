@@ -5,7 +5,7 @@
 const program = require('../ts_build/program');
 const { Wallet } = require('../ts_build/wallet');
 const promptly = require('promptly');
-const { DucatuscoreLib } = require('@ducatus/ducatuscore-crypto');
+const { DucatuscoreLib } = require('@ducatuscore/crypto');
 
 program
   .version(require('../package.json').version)
@@ -37,7 +37,6 @@ const main = async () => {
       message,
       signature
     });
-
   } catch (e) {
     console.error(e);
   }

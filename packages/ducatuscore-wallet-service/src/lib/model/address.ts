@@ -1,4 +1,4 @@
-import { Deriver } from '@ducatus/ducatuscore-crypto';
+import { Deriver } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { ChainService } from '../chain/index';
 import { Common } from '../common';
@@ -43,9 +43,9 @@ export class Address {
   beRegistered: boolean;
 
   static Ducatuscore = {
-    btc: require('@ducatus/ducatuscore-lib'),
-    bch: require('@ducatus/ducatuscore-lib-cash'),
-    duc: require('@ducatus/ducatuscore-lib-duc')
+    btc: require('@ducatuscore/lib'),
+    bch: require('@ducatuscore/lib-cash'),
+    duc: require('@ducatuscore/lib-duc')
   };
 
   static create(opts) {
@@ -128,7 +128,11 @@ export class Address {
         }
         break;
       case Constants.SCRIPT_TYPES.P2WPKH:
-        ducatuscoreAddress = Address.Ducatuscore[chain].Address.fromPublicKey(publicKeys[0], network, 'witnesspubkeyhash');
+        ducatuscoreAddress = Address.Ducatuscore[chain].Address.fromPublicKey(
+          publicKeys[0],
+          network,
+          'witnesspubkeyhash'
+        );
         break;
       case Constants.SCRIPT_TYPES.P2PKH:
         $.checkState(

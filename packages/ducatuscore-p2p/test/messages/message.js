@@ -3,10 +3,9 @@
 var should = require('chai').should();
 var P2P = require('../../');
 var Message = P2P.Messages.Message;
-var Networks = require('@ducatus/ducatuscore-lib').Networks;
+var Networks = require('@ducatuscore/lib').Networks;
 
 describe('Message', function() {
-
   describe('@constructor', function() {
     it('construct with magic number and command', function() {
       var message = new Message({
@@ -35,5 +34,4 @@ describe('Message', function() {
       buffer.should.deep.equal(expectedBuffer);
     });
   });
-
 });

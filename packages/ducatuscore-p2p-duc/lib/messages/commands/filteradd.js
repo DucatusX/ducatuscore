@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var utils = require('../utils');
 var BufferUtil = ducatuscore.util.buffer;
 var BufferWriter = ducatuscore.encoding.BufferWriter;

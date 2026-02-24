@@ -1,4 +1,4 @@
-import * as CryptoWalletCore from '@ducatus/ducatuscore-crypto';
+import * as CryptoWalletCore from '@ducatuscore/crypto';
 import 'source-map-support/register';
 import { Client } from './client';
 import { Encryption } from './encryption';

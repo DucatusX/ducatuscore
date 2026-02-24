@@ -12,8 +12,8 @@ See the configuration section to configure a different host/port.
 Use the following steps to Install DWS from the npmjs repository and run it with defaults.
 
 ```sh
-npm install @ducatus/ducatuscore-wallet-service
-cd @ducatus/ducatuscore-wallet-service
+npm install @ducatuscore/wallet-service
+cd @ducatuscore/wallet-service
 ```
 
 To change configuration before running, see the Configuration section.

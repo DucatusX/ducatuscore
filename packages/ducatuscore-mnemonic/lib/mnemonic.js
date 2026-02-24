@@ -1,6 +1,6 @@
 'use strict';
 
-const ducatuscore = require('@ducatus/ducatuscore-lib');
+const ducatuscore = require('@ducatuscore/lib');
 const BN = ducatuscore.crypto.BN;
 const unorm = require('unorm');
 const _ = ducatuscore.deps._;
@@ -12,7 +12,6 @@ const Hash = ducatuscore.crypto.Hash;
 const Random = ducatuscore.crypto.Random;
 
 const $ = ducatuscore.util.preconditions;
-
 
 /**
  * This is an immutable class that represents a BIP39 Mnemonic code.
@@ -45,7 +44,6 @@ var Mnemonic = function(data, wordlist) {
     data = null;
   }
 
-
   // handle data overloading
   var ent, phrase, seed;
   if (Buffer.isBuffer(data)) {
@@ -60,7 +58,6 @@ var Mnemonic = function(data, wordlist) {
   }
   ent = ent || 128;
 
-
   // check and detect wordlist
   wordlist = wordlist || Mnemonic._getDictionary(phrase);
   if (phrase && !wordlist) {
@@ -71,7 +68,6 @@ var Mnemonic = function(data, wordlist) {
   if (seed) {
     phrase = Mnemonic._entropy2mnemonic(seed, wordlist);
   }
-
 
   // validate phrase and ent
   if (phrase && !Mnemonic.isValid(phrase, wordlist)) {

@@ -1,5 +1,5 @@
-import { Transactions, Validation } from '@ducatus/ducatuscore-crypto';
-import { Web3 } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation } from '@ducatuscore/crypto';
+import { Web3 } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { IAddress } from 'src/lib/model/address';
 import { IChain, INotificationData } from '..';
@@ -225,14 +225,7 @@ export class EthChain implements IChain {
   }
 
   getDucatuscoreTx(txp, opts = { signed: true }) {
-    const {
-      data,
-      outputs,
-      tokenAddress,
-      multisigContractAddress,
-      multiSendContractAddress,
-      isTokenSwap
-    } = txp;
+    const { data, outputs, tokenAddress, multisigContractAddress, multiSendContractAddress, isTokenSwap } = txp;
     const isERC20 = tokenAddress && !isTokenSwap;
     const isETHMULTISIG = multisigContractAddress;
     const chain = isETHMULTISIG ? 'ETHMULTISIG' : isERC20 ? 'ETHERC20' : 'ETH';

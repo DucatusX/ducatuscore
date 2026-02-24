@@ -4,7 +4,7 @@
 
 var should = require('chai').should();
 
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 var P2P = require('../');
 var Inventory = P2P.Inventory;
 var BufferUtils = ducatuscore.util.buffer;
@@ -12,27 +12,22 @@ var BufferWriter = ducatuscore.encoding.BufferWriter;
 var BufferReader = ducatuscore.encoding.BufferReader;
 
 describe('Inventory', function() {
-
   var hash = new Buffer('eb951630aba498b9a0d10f72b5ea9e39d5ff04b03dc2231e662f52057f948aa1', 'hex');
   var hashedStr = BufferUtils.reverse(new Buffer(hash, 'hex')).toString('hex');
-  var inventoryBuffer = new Buffer(
-    '01000000eb951630aba498b9a0d10f72b5ea9e39d5ff04b03dc2231e662f52057f948aa1',
-    'hex'
-  );
+  var inventoryBuffer = new Buffer('01000000eb951630aba498b9a0d10f72b5ea9e39d5ff04b03dc2231e662f52057f948aa1', 'hex');
 
   describe('@constructor', function() {
     it('create inventory', function() {
-      var inventory = new Inventory({type: Inventory.TYPE.TX, hash: hash});
+      var inventory = new Inventory({ type: Inventory.TYPE.TX, hash: hash });
       should.exist(inventory);
     });
 
     it('error with string hash', function() {
       (function() {
-        var inventory = new Inventory({type: Inventory.TYPE.TX, hash: hashedStr});
+        var inventory = new Inventory({ type: Inventory.TYPE.TX, hash: hashedStr });
         should.not.exist(inventory);
-      }).should.throw('Unexpected hash');
+      }.should.throw('Unexpected hash'));
     });
-
   });
 
   describe('#forItem', function() {
@@ -41,7 +36,6 @@ describe('Inventory', function() {
       should.exist(inventory);
       inventory.hash.should.deep.equal(new Buffer(hash, 'hex'));
     });
-
   });
 
   describe('#forBlock', function() {
@@ -103,5 +97,4 @@ describe('Inventory', function() {
       inventory.hash.should.deep.equal(hash);
     });
   });
-
 });

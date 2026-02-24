@@ -4,7 +4,7 @@ import moment from 'moment';
 import 'source-map-support/register';
 import logger from './logger';
 
-import { Validation } from '@ducatus/ducatuscore-crypto';
+import { Validation } from '@ducatuscore/crypto';
 import { BlockChainExplorer } from './blockchainexplorer';
 import { V8 } from './blockchainexplorers/v8';
 import { ChainService } from './chain/index';
@@ -40,15 +40,15 @@ const serverMessages = require('../serverMessages');
 const BCHAddressTranslator = require('./bchaddresstranslator');
 const EmailValidator = require('email-validator');
 
-const Ducatuscore = require('@ducatus/ducatuscore-lib');
+const Ducatuscore = require('@ducatuscore/lib');
 const Ducatuscore_ = {
   btc: Ducatuscore,
-  bch: require('@ducatus/ducatuscore-lib-cash'),
+  bch: require('@ducatuscore/lib-cash'),
   eth: Ducatuscore,
   xrp: Ducatuscore,
   ducx: Ducatuscore,
   bnb: Ducatuscore,
-  duc: require('@ducatus/ducatuscore-lib-duc')
+  duc: require('@ducatuscore/lib-duc')
 };
 
 const Utils = Common.Utils;

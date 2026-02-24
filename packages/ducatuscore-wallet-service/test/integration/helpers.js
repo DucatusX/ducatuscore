@@ -16,10 +16,10 @@ var config = require('../test-config');
 //   memStore: true
 // });
 
-var Ducatuscore = require('@ducatus/ducatuscore-lib');
+var Ducatuscore = require('@ducatuscore/lib');
 var Ducatuscore_ = {
   btc: Ducatuscore,
-  bch: require('@ducatus/ducatuscore-lib-cash')
+  bch: require('@ducatuscore/lib-cash')
 };
 
 var { ChainService } = require('../../ts_build/lib/chain/index');
@@ -36,8 +36,8 @@ var TestData = require('../testdata');
 var storage, blockchainExplorer;
 
 // tinodb not longer supported
-var useMongoDb =  true; // !!process.env.USE_MONGO_DB;
-const CWC =  require('@ducatus/ducatuscore-crypto');
+var useMongoDb = true; // !!process.env.USE_MONGO_DB;
+const CWC = require('@ducatuscore/crypto');
 
 var helpers = {};
 
@@ -52,31 +52,31 @@ helpers.before = function(cb) {
         return cb(client.db(config.mongoDb.dbname));
       });
     } else {
-      throw "tingodb not longer supported";
+      throw 'tingodb not longer supported';
       //var db = new tingodb.Db('./db/test', {});
       //return cb(db);
     }
-
   }
   getDb(function(db) {
     storage = new Storage({
       db: db
     });
     Storage.createIndexes(db);
-    let be = blockchainExplorer = sinon.stub();
+    let be = (blockchainExplorer = sinon.stub());
     be.register = sinon.stub().callsArgWith(1, null, null);
     be.addAddresses = sinon.stub().callsArgWith(2, null, null);
     be.getAddressUtxos = sinon.stub().callsArgWith(2, null, []);
-    be.getCheckData = sinon.stub().callsArgWith(1, null, {sum: 100});
-    be.getUtxos = sinon.stub().callsArgWith(1, null,[]);
-    be.getTransactions = sinon.stub().callsArgWith(2, null,[]);
+    be.getCheckData = sinon.stub().callsArgWith(1, null, { sum: 100 });
+    be.getUtxos = sinon.stub().callsArgWith(1, null, []);
+    be.getTransactions = sinon.stub().callsArgWith(2, null, []);
     be.getBlockchainHeight = sinon.stub().callsArgWith(0, null, 1000, 'hash');
     be.estimateGas = sinon.stub().callsArgWith(1, null, Defaults.MIN_GAS_LIMIT);
-    be.getBalance = sinon.stub().callsArgWith(1, null, {unconfirmed:0, confirmed: '10000000000', balance: '10000000000' });
+    be.getBalance = sinon
+      .stub()
+      .callsArgWith(1, null, { unconfirmed: 0, confirmed: '10000000000', balance: '10000000000' });
 
     // just a number >0 (xrp does not accept 0)
     be.getTransactionCount = sinon.stub().callsArgWith(1, null, '5');
-
 
     var opts = {
       storage: storage,
@@ -115,20 +115,23 @@ helpers.beforeEach = function(cb) {
     LOCKS: 'locks'
   };
 
-
-  async.each(_.values(collections), (x, icb)=> {
-    storage.db.collection(x).deleteMany({}, icb);
-  }, (err) => {
-    should.not.exist(err);
-    var opts = {
-      storage: storage,
-      blockchainExplorer: blockchainExplorer,
-      request: sinon.stub()
-    };
-    WalletService.initialize(opts, function() {
-      return cb(opts);
-    });
-  });
+  async.each(
+    _.values(collections),
+    (x, icb) => {
+      storage.db.collection(x).deleteMany({}, icb);
+    },
+    err => {
+      should.not.exist(err);
+      var opts = {
+        storage: storage,
+        blockchainExplorer: blockchainExplorer,
+        request: sinon.stub()
+      };
+      WalletService.initialize(opts, function() {
+        return cb(opts);
+      });
+    }
+  );
 };
 
 helpers.after = function(cb) {
@@ -147,7 +150,7 @@ helpers.getStorage = function() {
 
 helpers.signMessage = function(message, privKey) {
   var priv = new Ducatuscore.PrivateKey(privKey);
-  const flattenedMessage = _.isArray(message)? _.join(message) : message;
+  const flattenedMessage = _.isArray(message) ? _.join(message) : message;
   var hash = Utils.hashMessage(flattenedMessage);
   return Ducatuscore.crypto.ECDSA.sign(hash, priv, 'little').toString();
 };
@@ -161,20 +164,24 @@ helpers.getAuthServer = function(copayerId, cb) {
   var verifyStub = sinon.stub(WalletService.prototype, '_verifySignature');
   verifyStub.returns(true);
 
-  WalletService.getInstanceWithAuth({
-    copayerId: copayerId,
-    message: 'dummy',
-    signature: 'dummy',
-    clientVersion: helpers.CLIENT_VERSION,
-  }, function(err, server) {
-    verifyStub.restore();
-    if (err || !server) throw new Error('Could not login as copayerId ' + copayerId + ' err: ' + err);
-    return cb(server);
-  });
+  WalletService.getInstanceWithAuth(
+    {
+      copayerId: copayerId,
+      message: 'dummy',
+      signature: 'dummy',
+      clientVersion: helpers.CLIENT_VERSION
+    },
+    function(err, server) {
+      verifyStub.restore();
+      if (err || !server) throw new Error('Could not login as copayerId ' + copayerId + ' err: ' + err);
+      return cb(server);
+    }
+  );
 };
 
 helpers._generateCopayersTestData = function() {
-  var xPrivKeys = ['xprv9s21ZrQH143K2n4rV4AtAJFptEmd1tNMKCcSyQBCSuN5eq1dCUhcv6KQJS49joRxu8NNdFxy8yuwTtzCPNYUZvVGC7EPRm2st2cvE7oyTbB',
+  var xPrivKeys = [
+    'xprv9s21ZrQH143K2n4rV4AtAJFptEmd1tNMKCcSyQBCSuN5eq1dCUhcv6KQJS49joRxu8NNdFxy8yuwTtzCPNYUZvVGC7EPRm2st2cvE7oyTbB',
     'xprv9s21ZrQH143K3BwkLceWNLUsgES15JoZuv8BZfnmDRcCGtDooUAPhY8KovhCWcRLXUun5AYL5vVtUNRrmPEibtfk9ongxAGLXZzEHifpvwZ',
     'xprv9s21ZrQH143K3xgLzxd6SuWqG5Zp1iUmyGgSsJVhdQNeTzAqBFvXXLZqZzFZqocTx4HD9vUVYU27At5i8q46LmBXXL97fo4H9C3tHm4BnjY',
     'xprv9s21ZrQH143K48nfuK14gKJtML7eQzV2dAH1RaqAMj8v2zs79uaavA9UTWMxpBdgbMH2mhJLeKGq8AFA6GDnFyWP4rLmknqZAfgFFV718vo',
@@ -195,7 +202,10 @@ helpers._generateCopayersTestData = function() {
     var xpub_45H = Ducatuscore.HDPublicKey(xpriv_45H);
     var id45 = Model.Copayer._xPubToCopayerId('btc', xpub_45H.toString());
 
-    var xpriv_44H_0H_0H = xpriv.deriveChild(44, true).deriveChild(0, true).deriveChild(0, true);
+    var xpriv_44H_0H_0H = xpriv
+      .deriveChild(44, true)
+      .deriveChild(0, true)
+      .deriveChild(0, true);
     var xpub_44H_0H_0H = Ducatuscore.HDPublicKey(xpriv_44H_0H_0H);
     var id44btc = Model.Copayer._xPubToCopayerId('btc', xpub_44H_0H_0H.toString());
     var id44bch = Model.Copayer._xPubToCopayerId('bch', xpub_44H_0H_0H.toString());
@@ -249,65 +259,68 @@ helpers.createAndJoinWallet = function(m, n, opts, cb) {
     coin: opts.coin || 'btc',
     network: opts.network || 'livenet',
     nativeCashAddr: opts.nativeCashAddr,
-    useNativeSegwit: opts.useNativeSegwit,
+    useNativeSegwit: opts.useNativeSegwit
   };
 
-  if (_.isBoolean(opts.supportBIP44AndP2PKH))
-    walletOpts.supportBIP44AndP2PKH = opts.supportBIP44AndP2PKH;
+  if (_.isBoolean(opts.supportBIP44AndP2PKH)) walletOpts.supportBIP44AndP2PKH = opts.supportBIP44AndP2PKH;
 
   server.createWallet(walletOpts, function(err, walletId) {
     if (err) throw err;
 
-    async.eachSeries(_.range(n), function(i, cb) {
-      var copayerData = TestData.copayers[i + offset];
+    async.eachSeries(
+      _.range(n),
+      function(i, cb) {
+        var copayerData = TestData.copayers[i + offset];
 
-      var pub = (_.isBoolean(opts.supportBIP44AndP2PKH) && !opts.supportBIP44AndP2PKH) ? copayerData.xPubKey_45H : copayerData.xPubKey_44H_0H_0H;
+        var pub =
+          _.isBoolean(opts.supportBIP44AndP2PKH) && !opts.supportBIP44AndP2PKH
+            ? copayerData.xPubKey_45H
+            : copayerData.xPubKey_44H_0H_0H;
 
-      if (opts.network == 'testnet') {
-        if (opts.coin == 'btc' || opts.coin == 'bch') {
-          pub = copayerData.xPubKey_44H_0H_0Ht;
-        } else {
-          pub = copayerData.xPubKey_44H_0H_0HtSAME;
-        }
-      }
-
-      var copayerOpts = helpers.getSignedCopayerOpts({
-        walletId: walletId,
-        coin: opts.coin,
-        name: 'copayer ' + (i + 1),
-        xPubKey: pub,
-        requestPubKey: copayerData.pubKey_1H_0,
-        customData: 'custom data ' + (i + 1),
-      });
-      if (_.isBoolean(opts.supportBIP44AndP2PKH))
-        copayerOpts.supportBIP44AndP2PKH = opts.supportBIP44AndP2PKH;
-
-      server.joinWallet(copayerOpts, function(err, result) {
-        if (err) throw err;
-        copayerIds.push(result.copayerId);
-        return cb(err);
-      });
-    }, function(err) {
-      if (err) return new Error('Could not generate wallet');
-      helpers.getAuthServer(copayerIds[0], function(s) {
-        if (opts.earlyRet) return cb(s);
-        s.getWallet({}, function(err, w) {
-
-          // STUB for checkWalletSync.
-          s.checkWalletSync = function(a,b, simple, cb) {
-            if (simple) return cb(null, false);
-            return cb(null, true);
+        if (opts.network == 'testnet') {
+          if (opts.coin == 'btc' || opts.coin == 'bch') {
+            pub = copayerData.xPubKey_44H_0H_0Ht;
+          } else {
+            pub = copayerData.xPubKey_44H_0H_0HtSAME;
           }
-          cb(s, w);
+        }
+
+        var copayerOpts = helpers.getSignedCopayerOpts({
+          walletId: walletId,
+          coin: opts.coin,
+          name: 'copayer ' + (i + 1),
+          xPubKey: pub,
+          requestPubKey: copayerData.pubKey_1H_0,
+          customData: 'custom data ' + (i + 1)
         });
-      });
-    });
+        if (_.isBoolean(opts.supportBIP44AndP2PKH)) copayerOpts.supportBIP44AndP2PKH = opts.supportBIP44AndP2PKH;
+
+        server.joinWallet(copayerOpts, function(err, result) {
+          if (err) throw err;
+          copayerIds.push(result.copayerId);
+          return cb(err);
+        });
+      },
+      function(err) {
+        if (err) return new Error('Could not generate wallet');
+        helpers.getAuthServer(copayerIds[0], function(s) {
+          if (opts.earlyRet) return cb(s);
+          s.getWallet({}, function(err, w) {
+            // STUB for checkWalletSync.
+            s.checkWalletSync = function(a, b, simple, cb) {
+              if (simple) return cb(null, false);
+              return cb(null, true);
+            };
+            cb(s, w);
+          });
+        });
+      }
+    );
   });
 };
 
-
 helpers.randomTXID = function() {
-  return Ducatuscore.crypto.Hash.sha256(Buffer.from((Math.random() * 100000).toString())).toString('hex');;
+  return Ducatuscore.crypto.Hash.sha256(Buffer.from((Math.random() * 100000).toString())).toString('hex');
 };
 
 helpers.toSatoshi = function(btc) {
@@ -321,7 +334,7 @@ helpers.toSatoshi = function(btc) {
 helpers._parseAmount = function(str) {
   var result = {
     amount: +0,
-    confirmations: _.random(6, 100),
+    confirmations: _.random(6, 100)
   };
 
   if (_.isNumber(str)) str = str.toString();
@@ -342,11 +355,11 @@ helpers._parseAmount = function(str) {
       break;
     case 'bit':
       result.amount = Utils.strip(+match[2] * 1e2);
-      break
+      break;
     case 'sat':
       result.amount = Utils.strip(+match[2]);
       break;
-  };
+  }
 
   return result;
 };
@@ -362,109 +375,116 @@ helpers.stubUtxos = function(server, wallet, amounts, opts, cb) {
     amounts = _.isArray(amounts) ? amounts : [amounts];
     blockchainExplorer.getBalance = function(opts, cb) {
       if (opts.tokenAddress) {
-        return cb(null, {unconfirmed:0, confirmed: 2e6, balance: 2e6 });
+        return cb(null, { unconfirmed: 0, confirmed: 2e6, balance: 2e6 });
       }
-      let conf =  _.sum(_.map(amounts, x =>  Number((x*1e18).toFixed(0))));
-      return cb(null, {unconfirmed:0, confirmed: conf, balance: conf });
-    }
+      let conf = _.sum(_.map(amounts, x => Number((x * 1e18).toFixed(0))));
+      return cb(null, { unconfirmed: 0, confirmed: conf, balance: conf });
+    };
     blockchainExplorer.estimateFee = sinon.stub().callsArgWith(1, null, 20000000000);
     return cb();
   }
 
   if (wallet.coin == 'eth') {
     amounts = _.isArray(amounts) ? amounts : [amounts];
-    let conf =  _.sum(_.map(amounts, x =>  Number((x*1e18).toFixed(0))));
-    blockchainExplorer.getBalance = sinon.stub().callsArgWith(1, null, {unconfirmed:0, confirmed: conf, balance: conf });
+    let conf = _.sum(_.map(amounts, x => Number((x * 1e18).toFixed(0))));
+    blockchainExplorer.getBalance = sinon
+      .stub()
+      .callsArgWith(1, null, { unconfirmed: 0, confirmed: conf, balance: conf });
     return cb();
   }
 
   if (wallet.coin == 'xrp') {
     amounts = _.isArray(amounts) ? amounts : [amounts];
-    let conf =  _.sum(_.map(amounts, x =>  Number((x*1e6).toFixed(0))));
-    conf =  conf + Defaults.MIN_XRP_BALANCE;
-    blockchainExplorer.getBalance = sinon.stub().callsArgWith(1, null, {unconfirmed:0, confirmed: conf, balance: conf });
+    let conf = _.sum(_.map(amounts, x => Number((x * 1e6).toFixed(0))));
+    conf = conf + Defaults.MIN_XRP_BALANCE;
+    blockchainExplorer.getBalance = sinon
+      .stub()
+      .callsArgWith(1, null, { unconfirmed: 0, confirmed: conf, balance: conf });
     return cb();
   }
-
-
 
   if (!helpers._utxos) helpers._utxos = {};
 
   var S = Ducatuscore_[wallet.coin].Script;
-  async.waterfall([
+  async.waterfall(
+    [
+      function(next) {
+        if (opts.addresses) return next(null, [].concat(opts.addresses));
+        async.mapSeries(
+          _.range(0, amounts.length > 2 ? 2 : 1),
+          function(i, next) {
+            server.createAddress({}, next);
+          },
+          next
+        );
+      },
+      function(addresses, next) {
+        addresses.should.not.be.empty;
 
-    function(next) {
-      if (opts.addresses) return next(null, [].concat(opts.addresses));
-      async.mapSeries(_.range(0, amounts.length > 2 ? 2 : 1), function(i, next) {
-        server.createAddress({}, next);
-      }, next);
-    },
-    function(addresses, next) {
-      addresses.should.not.be.empty;
+        var utxos = _.compact(
+          _.map([].concat(amounts), function(amount, i) {
+            var parsed = helpers._parseAmount(amount);
 
-      var utxos = _.compact(_.map([].concat(amounts), function(amount, i) {
-        var parsed = helpers._parseAmount(amount);
+            if (parsed.amount <= 0) return null;
 
-        if (parsed.amount <= 0) return null;
+            var address = addresses[i % addresses.length];
 
-        var address = addresses[i % addresses.length];
+            var scriptPubKey;
+            switch (wallet.addressType) {
+              case Constants.SCRIPT_TYPES.P2SH:
+                scriptPubKey = S.buildMultisigOut(address.publicKeys, wallet.m).toScriptHashOut();
+                break;
+              case Constants.SCRIPT_TYPES.P2PKH:
+                scriptPubKey = S.buildPublicKeyHashOut(address.address);
+                break;
+              case Constants.SCRIPT_TYPES.P2WPKH:
+                scriptPubKey = S.buildWitnessV0Out(address.address);
+                break;
+              case Constants.SCRIPT_TYPES.P2WSH:
+                scriptPubKey = S.buildWitnessV0Out(address.address);
+                break;
+            }
+            should.exist(scriptPubKey, 'unknown address type:' + wallet.addressType);
 
-        var scriptPubKey;
-        switch (wallet.addressType) {
-          case Constants.SCRIPT_TYPES.P2SH:
-            scriptPubKey = S.buildMultisigOut(address.publicKeys, wallet.m).toScriptHashOut();
-            break;
-         case Constants.SCRIPT_TYPES.P2PKH:
-            scriptPubKey = S.buildPublicKeyHashOut(address.address);
-            break;
-          case Constants.SCRIPT_TYPES.P2WPKH:
-            scriptPubKey = S.buildWitnessV0Out(address.address);
-            break;
-           case Constants.SCRIPT_TYPES.P2WSH:
-            scriptPubKey = S.buildWitnessV0Out(address.address);
-            break;
+            return {
+              txid: helpers.randomTXID(),
+              vout: _.random(0, 10),
+              satoshis: parsed.amount,
+              scriptPubKey: scriptPubKey.toBuffer().toString('hex'),
+              address: address.address,
+              confirmations: parsed.confirmations,
+              publicKeys: address.publicKeys,
+              wallet: wallet.id
+            };
+          })
+        );
+
+        if (opts.keepUtxos) {
+          helpers._utxos = helpers._utxos.concat(utxos);
+        } else {
+          helpers._utxos = utxos;
         }
-        should.exist(scriptPubKey, 'unknown address type:' + wallet.addressType);
 
-        return {
-          txid: helpers.randomTXID(),
-          vout: _.random(0, 10),
-          satoshis: parsed.amount,
-          scriptPubKey: scriptPubKey.toBuffer().toString('hex'),
-          address: address.address,
-          confirmations: parsed.confirmations,
-          publicKeys: address.publicKeys,
-          wallet: wallet.id,
+        blockchainExplorer.getUtxos = function(param1, height, cb) {
+          var selected;
+          selected = _.filter(helpers._utxos, { wallet: param1.id });
+          return cb(null, selected);
         };
-      }));
 
-      if (opts.keepUtxos) {
-        helpers._utxos = helpers._utxos.concat(utxos);
-      } else {
-        helpers._utxos = utxos;
+        blockchainExplorer.getAddressUtxos = function(param1, height, cb) {
+          var selected;
+          selected = _.filter(helpers._utxos, { address: param1 });
+          return cb(null, selected);
+        };
+
+        return next();
       }
-
-      blockchainExplorer.getUtxos = function(param1, height, cb) {
-
-        var selected;
-        selected = _.filter(helpers._utxos, {'wallet': param1.id});
-        return cb(null, selected);
-      };
-
-
-      blockchainExplorer.getAddressUtxos = function(param1, height, cb) {
-        var selected;
-        selected = _.filter(helpers._utxos, {'address': param1});
-        return cb(null, selected);
-      };
-
-
-      return next();
-    },
-  ], function(err) {
-    should.not.exist(err);
-    return cb(helpers._utxos);
-  });
+    ],
+    function(err) {
+      should.not.exist(err);
+      return cb(helpers._utxos);
+    }
+  );
 };
 
 helpers.stubBroadcast = function(txid) {
@@ -481,9 +501,9 @@ helpers.createTxsV8 = function(nr, bcHeight, txs) {
   //  2.  => 2      / bcHeight - 1  /   txid2
   //  3.  => 3...   / bcHeight - 2  /   txid3
 
-  var  i = 0;
+  var i = 0;
   if (_.isEmpty(txs)) {
-    while(i < nr) {
+    while (i < nr) {
       txs.push({
         id: 'id' + i,
         txid: 'txid' + i,
@@ -491,10 +511,10 @@ helpers.createTxsV8 = function(nr, bcHeight, txs) {
         category: 'receive',
         satoshis: 30001,
         // this is translated on V8.prototype.getTransactions
-        amount: 30001 /1e8,
-        height: (i == 0) ? -1 :  bcHeight - i + 1,
+        amount: 30001 / 1e8,
+        height: i == 0 ? -1 : bcHeight - i + 1,
         address: 'muFJi3ZPfR5nhxyD7dfpx2nYZA8Wmwzgck',
-        blockTime: '2018-09-21T18:08:31.000Z',
+        blockTime: '2018-09-21T18:08:31.000Z'
       });
       i++;
     }
@@ -503,43 +523,42 @@ helpers.createTxsV8 = function(nr, bcHeight, txs) {
   return txs;
 };
 
-
 helpers.stubHistory = function(nr, bcHeight, txs) {
-  txs= helpers.createTxsV8(nr,bcHeight, txs);
+  txs = helpers.createTxsV8(nr, bcHeight, txs);
   blockchainExplorer.getTransactions = function(walletId, startBlock, cb) {
     startBlock = startBlock || 0;
-    var page = _.filter(txs, (x) => {
-      return x.height >=startBlock || x.height == -1
+    var page = _.filter(txs, x => {
+      return x.height >= startBlock || x.height == -1;
     });
     return cb(null, page);
   };
 };
 
-
 helpers.stubCheckData = function(bc, server, isBCH, cb) {
-  server.storage.walletCheck({walletId:server.walletId, bch: isBCH}).then((x) => {
-    bc.getCheckData = sinon.stub().callsArgWith(1, null, {sum: x.sum});
+  server.storage.walletCheck({ walletId: server.walletId, bch: isBCH }).then(x => {
+    bc.getCheckData = sinon.stub().callsArgWith(1, null, { sum: x.sum });
     return cb();
   });
 };
-
 
 // fill => fill intermediary levels
 helpers.stubFeeLevels = function(levels, fill, coin) {
   coin = coin || 'btc';
   let div = 1;
   if (coin == 'btc' || coin == 'bch') {
-    div = 1e8;  // bitcoind returns values in BTC amounts
+    div = 1e8; // bitcoind returns values in BTC amounts
   }
 
   blockchainExplorer.estimateFee = function(nbBlocks, cb) {
-    var result = _.fromPairs(_.map(_.pick(levels, nbBlocks), function(fee, n) {
-      return [+n, fee > 0 ? fee / div : fee];
-    }));
+    var result = _.fromPairs(
+      _.map(_.pick(levels, nbBlocks), function(fee, n) {
+        return [+n, fee > 0 ? fee / div : fee];
+      })
+    );
 
     if (fill) {
       let last;
-      _.each(nbBlocks, (n) => {
+      _.each(nbBlocks, n => {
         if (result[n]) {
           last = result[n];
         }
@@ -550,21 +569,16 @@ helpers.stubFeeLevels = function(levels, fill, coin) {
   };
 };
 
-
-
-
 var stubAddressActivityFailsOn = null;
-var stubAddressActivityFailsOnCount=1;
+var stubAddressActivityFailsOnCount = 1;
 helpers.stubAddressActivity = function(activeAddresses, failsOn) {
-
-  stubAddressActivityFailsOnCount=1;
+  stubAddressActivityFailsOnCount = 1;
 
   // could be null
   stubAddressActivityFailsOn = failsOn;
 
   blockchainExplorer.getAddressActivity = function(address, cb) {
-    if (stubAddressActivityFailsOnCount === stubAddressActivityFailsOn)
-      return cb('failed on request');
+    if (stubAddressActivityFailsOnCount === stubAddressActivityFailsOn) return cb('failed on request');
 
     stubAddressActivityFailsOnCount++;
 
@@ -582,23 +596,22 @@ helpers.clientSign = function(txp, derivedXPrivKey) {
 
   var xpriv = new Ducatuscore.HDPrivateKey(derivedXPrivKey, txp.network);
 
-  switch(txp.coin) {
+  switch (txp.coin) {
     case 'eth':
     case 'xrp':
-
       // For eth => account, 0, change = 0
-      const priv =  xpriv.derive('m/0/0').privateKey;
+      const priv = xpriv.derive('m/0/0').privateKey;
       const privKey = priv.toString('hex');
       let tx = ChainService.getDucatuscoreTx(txp).uncheckedSerialize();
       const isERC20 = txp.tokenAddress;
       const chain = isERC20 ? ChainService.getChain(txp.coin) + 'ERC20' : ChainService.getChain(txp.coin);
-      tx = typeof tx === 'string'? [tx] : tx;
+      tx = typeof tx === 'string' ? [tx] : tx;
       signatures = [];
       for (const rawTx of tx) {
         const signed = CWC.Transactions.getSignature({
           chain: chain.toUpperCase(),
           tx: rawTx,
-          key: { privKey: privKey.toString('hex') },
+          key: { privKey: privKey.toString('hex') }
         });
         signatures.push(signed);
       }
@@ -619,7 +632,7 @@ helpers.clientSign = function(txp, derivedXPrivKey) {
       signatures = _.map(_.sortBy(_.flatten(signatures), 'inputIndex'), function(s) {
         return s.signature.toDER(txp.signingMethod).toString('hex');
       });
-  };
+  }
 
   return signatures;
 };
@@ -630,34 +643,36 @@ helpers.getProposalSignatureOpts = function(txp, signingKey) {
 
   return {
     txProposalId: txp.id,
-    proposalSignature: proposalSignature,
-  }
+    proposalSignature: proposalSignature
+  };
 };
-
 
 helpers.createAddresses = function(server, wallet, main, change, cb) {
   // var clock = sinon.useFakeTimers('Date');
 
-  async.mapSeries(_.range(main + change), function(i, next) {
-    // clock.tick(1000);
-    var address = wallet.createAddress(i >= main);
-    server.storage.storeAddressAndWallet(wallet, address, function(err) {
-      next(err, address);
-    });
-  }, function(err, addresses) {
-    should.not.exist(err);
-    // clock.restore();
+  async.mapSeries(
+    _.range(main + change),
+    function(i, next) {
+      // clock.tick(1000);
+      var address = wallet.createAddress(i >= main);
+      server.storage.storeAddressAndWallet(wallet, address, function(err) {
+        next(err, address);
+      });
+    },
+    function(err, addresses) {
+      should.not.exist(err);
+      // clock.restore();
 
-    return cb(_.take(addresses, main), _.takeRight(addresses, change));
-  });
+      return cb(_.take(addresses, main), _.takeRight(addresses, change));
+    }
+  );
 };
 
 helpers.createAndPublishTx = function(server, txOpts, signingKey, cb) {
-
   server.createTx(txOpts, function(err, txp) {
     if (err) console.log(err);
-    should.not.exist(err, "Error creating a TX");
-    should.exist(txp,"Error... no txp");
+    should.not.exist(err, 'Error creating a TX');
+    should.exist(txp, 'Error... no txp');
     var publishOpts = helpers.getProposalSignatureOpts(txp, signingKey);
     server.publishTx(publishOpts, function(err) {
       if (err) console.log(err);
@@ -667,35 +682,35 @@ helpers.createAndPublishTx = function(server, txOpts, signingKey, cb) {
   });
 };
 
-
 helpers.historyCacheTest = function(items) {
   var template = {
-    txid: "fad88682ccd2ff34cac6f7355fe9ecd8addd9ef167e3788455972010e0d9d0de",
-    vin: [{
-      txid: "0279ef7b21630f859deb723e28beac9e7011660bd1346c2da40321d2f7e34f04",
-      vout: 0,
-      n: 0,
-      addr: "2NAVFnsHqy5JvqDJydbHPx393LFqFFBQ89V",
-      valueSat: 45753,
-      value: 0.00045753,
-    }],
-    vout: [{
-      value: "0.00011454",
-      n: 0,
-      scriptPubKey: {
-        addresses: [
-          "2N7GT7XaN637eBFMmeczton2aZz5rfRdZso"
-        ]
+    txid: 'fad88682ccd2ff34cac6f7355fe9ecd8addd9ef167e3788455972010e0d9d0de',
+    vin: [
+      {
+        txid: '0279ef7b21630f859deb723e28beac9e7011660bd1346c2da40321d2f7e34f04',
+        vout: 0,
+        n: 0,
+        addr: '2NAVFnsHqy5JvqDJydbHPx393LFqFFBQ89V',
+        valueSat: 45753,
+        value: 0.00045753
       }
-    }, {
-      value: "0.00020000",
-      n: 1,
-      scriptPubKey: {
-        addresses: [
-          "mq4D3Va5mYHohMEHrgHNGzCjKhBKvuEhPE"
-        ]
+    ],
+    vout: [
+      {
+        value: '0.00011454',
+        n: 0,
+        scriptPubKey: {
+          addresses: ['2N7GT7XaN637eBFMmeczton2aZz5rfRdZso']
+        }
+      },
+      {
+        value: '0.00020000',
+        n: 1,
+        scriptPubKey: {
+          addresses: ['mq4D3Va5mYHohMEHrgHNGzCjKhBKvuEhPE']
+        }
       }
-    }],
+    ],
     confirmations: 1,
     blockheight: 423499,
     time: 1424472242,

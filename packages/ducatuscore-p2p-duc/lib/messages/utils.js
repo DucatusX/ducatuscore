@@ -1,6 +1,6 @@
 'use strict';
 
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var BufferUtil = ducatuscore.util.buffer;
 var $ = ducatuscore.util.preconditions;
 var _ = ducatuscore.deps._;
@@ -16,7 +16,7 @@ module.exports = utils = {
     );
   },
   checkFinished: function checkFinished(parser) {
-    if(!parser.finished()) {
+    if (!parser.finished()) {
       throw new Error('Data still available after parsing');
     }
   },

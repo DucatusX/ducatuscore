@@ -4,7 +4,7 @@ var Buffers = require('./buffers');
 var EventEmitter = require('events').EventEmitter;
 var Net = require('net');
 var Socks5Client = require('socks5-client');
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var Networks = ducatuscore.Networks;
 var Messages = require('./messages');
 var $ = ducatuscore.util.preconditions;
@@ -63,11 +63,13 @@ function Peer(options) {
     this.port = this.network.port;
   }
 
-  this.messages = options.messages || new Messages({
-    network: this.network,
-    Block: ducatuscore.Block,
-    Transaction: ducatuscore.Transaction
-  });
+  this.messages =
+    options.messages ||
+    new Messages({
+      network: this.network,
+      Block: ducatuscore.Block,
+      Transaction: ducatuscore.Transaction
+    });
 
   this.dataBuffer = new Buffers();
 
@@ -93,7 +95,7 @@ function Peer(options) {
     var verackResponse = self.messages.VerAck();
     self.sendMessage(verackResponse);
 
-    if(!self.versionSent) {
+    if (!self.versionSent) {
       self._sendVersion();
     }
   });
@@ -103,7 +105,6 @@ function Peer(options) {
   });
 
   return this;
-
 }
 util.inherits(Peer, EventEmitter);
 
@@ -199,7 +200,7 @@ Peer.prototype.sendMessage = function(message) {
  */
 Peer.prototype._sendVersion = function() {
   // todo: include sending local ip address
-  var message = this.messages.Version({relay: this.relay});
+  var message = this.messages.Version({ relay: this.relay });
   this.versionSent = true;
   this.sendMessage(message);
 };

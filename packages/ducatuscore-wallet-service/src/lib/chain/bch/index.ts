@@ -1,4 +1,4 @@
-import { DucatuscoreLib, DucatuscoreLibCash } from '@ducatus/ducatuscore-crypto';
+import { DucatuscoreLib, DucatuscoreLibCash } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { IChain } from '..';
 import { BtcChain } from '../btc';

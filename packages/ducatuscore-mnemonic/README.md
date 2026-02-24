@@ -9,14 +9,14 @@ BIP39 Mnemonics for ducatuscore
 This library is distributed in both the npm packaging systems.
 
 ```sh
-npm install @ducatus/ducatuscore-lib  #this to install ducatuscore-lib since it is a peerDependecy
-npm install @ducatus/ducatuscore-mnemonic
+npm install @ducatuscore/lib  #this to install ducatuscore-lib since it is a peerDependecy
+npm install @ducatuscore/mnemonic
 ```
 
 There are many examples of how to use it on the developer guide [section for mnemonic](./docs/index.md). For example, the following code would generate a new random mnemonic code and convert it to a `HDPrivateKey`.
 
 ```javascript
-var Mnemonic = require('@ducatus/ducatuscore-mnemonic');
+var Mnemonic = require('@ducatuscore/mnemonic');
 var code = new Mnemonic(Mnemonic.Words.SPANISH);
 code.toString(); // natal hada sutil año sólido papel jamón combate aula flota ver esfera...
 var xpriv = code.toHDPrivateKey();

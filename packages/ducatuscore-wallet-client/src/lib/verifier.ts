@@ -2,7 +2,7 @@ import * as _ from 'lodash';
 import { Constants, Utils } from './common';
 var $ = require('preconditions').singleton();
 
-import { DucatuscoreLib, DucatuscoreLibCash } from '@ducatus/ducatuscore-crypto';
+import { DucatuscoreLib, DucatuscoreLibCash } from '@ducatuscore/crypto';
 
 var Ducatuscore = DucatuscoreLib;
 var BCHAddress = DucatuscoreLibCash.Address;
@@ -23,10 +23,7 @@ export class Verifier {
    * @returns {Boolean} true or false
    */
   static checkAddress(credentials, address, escrowInputs?) {
-    $.checkState(
-      credentials.isComplete(),
-      'Failed state: credentials at <checkAddress>'
-    );
+    $.checkState(credentials.isComplete(), 'Failed state: credentials at <checkAddress>');
 
     var local = Utils.deriveAddress(
       address.type || credentials.addressType,
@@ -37,10 +34,7 @@ export class Verifier {
       credentials.chain,
       escrowInputs
     );
-    return (
-      local.address == address.address &&
-      _.difference(local.publicKeys, address.publicKeys).length === 0
-    );
+    return local.address == address.address && _.difference(local.publicKeys, address.publicKeys).length === 0;
   }
 
   /**
@@ -51,13 +45,8 @@ export class Verifier {
    * @returns {Boolean} true or false
    */
   static checkCopayers(credentials, copayers) {
-    $.checkState(
-      credentials.walletPrivKey,
-      'Failed state: credentials at <checkCopayers>'
-    );
-    var walletPubKey = Ducatuscore.PrivateKey.fromString(credentials.walletPrivKey)
-      .toPublicKey()
-      .toString();
+    $.checkState(credentials.walletPrivKey, 'Failed state: credentials at <checkCopayers>');
+    var walletPubKey = Ducatuscore.PrivateKey.fromString(credentials.walletPrivKey).toPublicKey().toString();
 
     if (copayers.length != credentials.n) {
       log.error('Missing public keys in server response');
@@ -67,7 +56,7 @@ export class Verifier {
     // Repeated xpub kes?
     var uniq = [];
     var error;
-    _.each(copayers, copayer => {
+    _.each(copayers, (copayer) => {
       if (error) return;
 
       if (uniq[copayers.xPubKey]++) {
@@ -85,11 +74,7 @@ export class Verifier {
         log.error('Missing copayer fields in server response');
         error = true;
       } else {
-        var hash = Utils.getCopayerHash(
-          copayer.encryptedName || copayer.name,
-          copayer.xPubKey,
-          copayer.requestPubKey
-        );
+        var hash = Utils.getCopayerHash(copayer.encryptedName || copayer.name, copayer.xPubKey, copayer.requestPubKey);
         if (!Utils.verifyMessage(hash, copayer.signature, walletPubKey)) {
           log.error('Invalid signatures in server response');
           error = true;
@@ -132,10 +117,8 @@ export class Verifier {
     if (txp.changeAddress) {
       changeAddress = txp.changeAddress.address;
     }
-    if (args.changeAddress && !strEqual(changeAddress, args.changeAddress))
-      return false;
-    if (_.isNumber(args.feePerKb) && txp.feePerKb != args.feePerKb)
-      return false;
+    if (args.changeAddress && !strEqual(changeAddress, args.changeAddress)) return false;
+    if (_.isNumber(args.feePerKb) && txp.feePerKb != args.feePerKb) return false;
 
     var decryptedMessage = null;
     try {
@@ -144,26 +127,18 @@ export class Verifier {
       return false;
     }
     if (!strEqual(txp.message, decryptedMessage)) return false;
-    if (
-      (args.customData || txp.customData) &&
-      !_.isEqual(txp.customData, args.customData)
-    )
-      return false;
+    if ((args.customData || txp.customData) && !_.isEqual(txp.customData, args.customData)) return false;
 
     return true;
   }
 
   static checkTxProposalSignature(credentials, txp) {
     $.checkArgument(txp.creatorId);
-    $.checkState(
-      credentials.isComplete(),
-      'Failed state: credentials at checkTxProposalSignature'
-    );
+    $.checkState(credentials.isComplete(), 'Failed state: credentials at checkTxProposalSignature');
 
     var chain = txp.chain?.toLowerCase() || Utils.getChain(txp.coin); // getChain -> backwards compatibility
-    var creatorKeys = _.find(credentials.publicKeyRing, item => {
-      if (Utils.xPubToCopayerId(chain, item.xPubKey) === txp.creatorId)
-        return true;
+    var creatorKeys = _.find(credentials.publicKeyRing, (item) => {
+      if (Utils.xPubToCopayerId(chain, item.xPubKey) === txp.creatorId) return true;
     });
 
     if (!creatorKeys) return false;
@@ -172,13 +147,7 @@ export class Verifier {
     // If the txp using a selfsigned pub key?
     if (txp.proposalSignaturePubKey) {
       // Verify it...
-      if (
-        !Utils.verifyRequestPubKey(
-          txp.proposalSignaturePubKey,
-          txp.proposalSignaturePubKeySig,
-          creatorKeys.xPubKey
-        )
-      )
+      if (!Utils.verifyRequestPubKey(txp.proposalSignaturePubKey, txp.proposalSignaturePubKeySig, creatorKeys.xPubKey))
         return false;
 
       creatorSigningPubKey = txp.proposalSignaturePubKey;
@@ -195,23 +164,14 @@ export class Verifier {
       throw new Error('Transaction proposal not supported');
     }
 
-    log.debug(
-      'Regenerating & verifying tx proposal hash -> Hash: ',
-      hash,
-      ' Signature: ',
-      txp.proposalSignature
-    );
-    if (!Utils.verifyMessage(hash, txp.proposalSignature, creatorSigningPubKey))
-      return false;
+    log.debug('Regenerating & verifying tx proposal hash -> Hash: ', hash, ' Signature: ', txp.proposalSignature);
+    if (!Utils.verifyMessage(hash, txp.proposalSignature, creatorSigningPubKey)) return false;
 
     if (Constants.UTXO_CHAINS.includes(chain)) {
       if (!this.checkAddress(credentials, txp.changeAddress)) {
         return false;
       }
-      if (
-        txp.escrowAddress &&
-        !this.checkAddress(credentials, txp.escrowAddress, txp.inputs)
-      ) {
+      if (txp.escrowAddress && !this.checkAddress(credentials, txp.escrowAddress, txp.inputs)) {
         return false;
       }
     }

@@ -3,12 +3,10 @@
 var should = require('chai').should();
 var P2P = require('../../');
 var builder = P2P.Messages.builder;
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 
 describe('Messages Builder', function() {
-
   describe('@constructor', function() {
-
     it('should return commands based on default', function() {
       // instantiate
       var b = builder();
@@ -24,7 +22,5 @@ describe('Messages Builder', function() {
       });
       should.exist(b);
     });
-
   });
-
 });

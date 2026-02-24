@@ -1,18 +1,13 @@
 'use strict';
 
 var $ = require('preconditions').singleton();
-import {
-  Deriver,
-  DucatuscoreLib,
-  DucatuscoreLibCash,
-  Transactions
-} from '@ducatus/ducatuscore-crypto';
+import { Deriver, DucatuscoreLib, DucatuscoreLibCash, Transactions } from '@ducatuscore/crypto';
 import * as _ from 'lodash';
 import { Constants, Utils } from './common';
 import { Credentials } from './credentials';
 
 var Ducatuscore = DucatuscoreLib;
-var Mnemonic = require('@ducatus/ducatuscore-mnemonic');
+var Mnemonic = require('@ducatuscore/mnemonic');
 var sjcl = require('sjcl');
 var log = require('./log');
 const async = require('async');
@@ -26,7 +21,7 @@ const wordsForLang: any = {
   ja: Mnemonic.Words.JAPANESE,
   zh: Mnemonic.Words.CHINESE,
   fr: Mnemonic.Words.FRENCH,
-  it: Mnemonic.Words.ITALIAN
+  it: Mnemonic.Words.ITALIAN,
 };
 
 // we always set 'livenet' for xprivs. it has not consecuences
@@ -99,8 +94,7 @@ export class Key {
 
     switch (opts.seedType) {
       case 'new':
-        if (opts.language && !wordsForLang[opts.language])
-          throw new Error('Unsupported language');
+        if (opts.language && !wordsForLang[opts.language]) throw new Error('Unsupported language');
 
         let m = new Mnemonic(wordsForLang[opts.language]);
         while (!Mnemonic.isValid(m.toString())) {
@@ -125,11 +119,7 @@ export class Key {
         this.fingerPrint = xpriv.fingerPrint.toString('hex');
 
         if (opts.password) {
-          this.#xPrivKeyEncrypted = sjcl.encrypt(
-            opts.password,
-            xpriv.toString(),
-            opts
-          );
+          this.#xPrivKeyEncrypted = sjcl.encrypt(opts.password, xpriv.toString(), opts);
           if (!this.#xPrivKeyEncrypted) throw new Error('Could not encrypt');
         } else {
           this.#xPrivKey = xpriv.toString();
@@ -139,10 +129,7 @@ export class Key {
         break;
       case 'object':
         $.shouldBeObject(x, 'Need to provide an object at opts.seedData');
-        $.shouldBeUndefined(
-          opts.password,
-          'opts.password not allowed when source is object'
-        );
+        $.shouldBeUndefined(opts.password, 'opts.password not allowed when source is object');
 
         if (this.#version != x.version) {
           throw new Error('Bad Key version');
@@ -175,8 +162,7 @@ export class Key {
         this.compliantDerivation = true;
         this.id = Uuid.v4();
 
-        if (!_.isUndefined(x.compliantDerivation))
-          this.compliantDerivation = x.compliantDerivation;
+        if (!_.isUndefined(x.compliantDerivation)) this.compliantDerivation = x.compliantDerivation;
         if (!_.isUndefined(x.id)) this.id = x.id;
 
         this.#xPrivKey = x.xPrivKey;
@@ -194,11 +180,7 @@ export class Key {
 
         // if old credentials had use145forBCH...use it.
         // else,if the wallet is bch, set it to true.
-        this.use0forBCH = x.use145forBCH
-          ? false
-          : x.coin == 'bch'
-          ? true
-          : false;
+        this.use0forBCH = x.use145forBCH ? false : x.coin == 'bch' ? true : false;
 
         this.BIP45 = x.derivationStrategy == 'BIP45';
         break;
@@ -214,25 +196,14 @@ export class Key {
     return a.id == b.id || a.fingerPrint == b.fingerPrint;
   }
 
-  private setFromMnemonic(
-    m,
-    opts: { passphrase?: string; password?: string; sjclOpts?: any }
-  ) {
+  private setFromMnemonic(m, opts: { passphrase?: string; password?: string; sjclOpts?: any }) {
     const xpriv = m.toHDPrivateKey(opts.passphrase, NETWORK);
     this.fingerPrint = xpriv.fingerPrint.toString('hex');
 
     if (opts.password) {
-      this.#xPrivKeyEncrypted = sjcl.encrypt(
-        opts.password,
-        xpriv.toString(),
-        opts.sjclOpts
-      );
+      this.#xPrivKeyEncrypted = sjcl.encrypt(opts.password, xpriv.toString(), opts.sjclOpts);
       if (!this.#xPrivKeyEncrypted) throw new Error('Could not encrypt');
-      this.#mnemonicEncrypted = sjcl.encrypt(
-        opts.password,
-        m.phrase,
-        opts.sjclOpts
-      );
+      this.#mnemonicEncrypted = sjcl.encrypt(opts.password, m.phrase, opts.sjclOpts);
       if (!this.#mnemonicEncrypted) throw new Error('Could not encrypt');
     } else {
       this.#xPrivKey = xpriv.toString();
@@ -256,7 +227,7 @@ export class Key {
       // data for derived credentials.
       use0forBCH: this.use0forBCH,
       use44forMultisig: this.use44forMultisig,
-      id: this.id
+      id: this.id,
     };
     return _.clone(ret);
   };
@@ -282,10 +253,7 @@ export class Key {
     let fingerPrintUpdated = false;
 
     if (this.isPrivKeyEncrypted()) {
-      $.checkArgument(
-        password,
-        'Private keys are encrypted, a password is needed'
-      );
+      $.checkArgument(password, 'Private keys are encrypted, a password is needed');
       try {
         keys.xPrivKey = sjcl.decrypt(password, this.#xPrivKeyEncrypted);
 
@@ -314,24 +282,21 @@ export class Key {
   };
 
   encrypt = function (password, opts) {
-    if (this.#xPrivKeyEncrypted)
-      throw new Error('Private key already encrypted');
+    if (this.#xPrivKeyEncrypted) throw new Error('Private key already encrypted');
 
     if (!this.#xPrivKey) throw new Error('No private key to encrypt');
 
     this.#xPrivKeyEncrypted = sjcl.encrypt(password, this.#xPrivKey, opts);
     if (!this.#xPrivKeyEncrypted) throw new Error('Could not encrypt');
 
-    if (this.#mnemonic)
-      this.#mnemonicEncrypted = sjcl.encrypt(password, this.#mnemonic, opts);
+    if (this.#mnemonic) this.#mnemonicEncrypted = sjcl.encrypt(password, this.#mnemonic, opts);
 
     this.#xPrivKey = null;
     this.#mnemonic = null;
   };
 
   decrypt = function (password) {
-    if (!this.#xPrivKeyEncrypted)
-      throw new Error('Private key is not encrypted');
+    if (!this.#xPrivKeyEncrypted) throw new Error('Private key is not encrypted');
 
     try {
       this.#xPrivKey = sjcl.decrypt(password, this.#xPrivKeyEncrypted);
@@ -348,10 +313,7 @@ export class Key {
 
   derive = function (password, path) {
     $.checkArgument(path, 'no path at derive()');
-    var xPrivKey = new Ducatuscore.HDPrivateKey(
-      this.get(password).xPrivKey,
-      NETWORK
-    );
+    var xPrivKey = new Ducatuscore.HDPrivateKey(this.get(password).xPrivKey, NETWORK);
     var deriveFn = this.compliantDerivation
       ? _.bind(xPrivKey.deriveChild, xPrivKey)
       : _.bind(xPrivKey.deriveNonCompliantChild, xPrivKey);
@@ -363,8 +325,7 @@ export class Key {
   };
 
   _checkNetwork = function (network) {
-    if (!_.includes(['livenet', 'testnet'], network))
-      throw new Error('Invalid network');
+    if (!_.includes(['livenet', 'testnet'], network)) throw new Error('Invalid network');
   };
 
   /*
@@ -429,10 +390,7 @@ export class Key {
 
     let path = this.getBaseAddressDerivationPath(opts);
     let xPrivKey = this.derive(password, path);
-    let requestPrivKey = this.derive(
-      password,
-      Constants.PATHS.REQUEST_KEY
-    ).privateKey.toString();
+    let requestPrivKey = this.derive(password, Constants.PATHS.REQUEST_KEY).privateKey.toString();
 
     if (opts.network == 'testnet') {
       // Hacky: BTC/BCH xPriv depends on network: This code is to
@@ -456,7 +414,7 @@ export class Key {
       keyId: this.id,
       requestPrivKey,
       addressType: opts.addressType,
-      walletPrivKey: opts.walletPrivKey
+      walletPrivKey: opts.walletPrivKey,
     });
   };
 
@@ -479,7 +437,7 @@ export class Key {
 
     return {
       signature,
-      requestPrivKey
+      requestPrivKey,
     };
   };
 
@@ -500,17 +458,14 @@ export class Key {
 
     if (Constants.UTXO_CHAINS.includes(chain)) {
       for (const i of txp.inputs) {
-        $.checkState(
-          i.path,
-          'Input derivation path not available (signing transaction)'
-        );
+        $.checkState(i.path, 'Input derivation path not available (signing transaction)');
         if (!derived[i.path]) {
           derived[i.path] = xpriv.deriveChild(i.path).privateKey;
           privs.push(derived[i.path]);
         }
-      };
+      }
 
-      var signatures = privs.map(function(priv, i) {
+      var signatures = privs.map(function (priv, i) {
         return t.getSignatures(priv, undefined, txp.signingMethod);
       });
 
@@ -521,7 +476,7 @@ export class Key {
       //     throw new Error('INVALID SIGNATURE');
       //   }
       // }
-      signatures = signatures.map(sig => sig.signature.toDER().toString('hex'));
+      signatures = signatures.map((sig) => sig.signature.toDER().toString('hex'));
 
       return signatures;
     } else {
@@ -542,7 +497,7 @@ export class Key {
         const signed = Transactions.getSignature({
           chain: chain.toUpperCase(),
           tx: rawTx,
-          key: { privKey, pubKey }
+          key: { privKey, pubKey },
         });
         signatures.push(signed);
       }

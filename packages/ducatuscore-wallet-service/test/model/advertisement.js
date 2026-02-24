@@ -5,20 +5,20 @@ var chai = require('chai');
 var sinon = require('sinon');
 var should = chai.should();
 var { Advertisement } = require('../../ts_build/lib/model/advertisement');
-var Ducatuscore = require('@ducatus/ducatuscore-lib');
+var Ducatuscore = require('@ducatuscore/lib');
 
-describe("#Advertisement", function() {
-  describe("#create", function() {
-    it("should create Advertisement", function() {
-      var x = Advertisement.create({ title: "Test Title"});
+describe('#Advertisement', function() {
+  describe('#create', function() {
+    it('should create Advertisement', function() {
+      var x = Advertisement.create({ title: 'Test Title' });
 
       should.exist(x);
     });
   });
 
-  describe("#fromObj", function() {
-     it("should create Advertisement", function() {
-      var x = Advertisement.fromObj({ title: "Test Title" });
+  describe('#fromObj', function() {
+    it('should create Advertisement', function() {
+      var x = Advertisement.fromObj({ title: 'Test Title' });
       should.exist(x);
     });
   });

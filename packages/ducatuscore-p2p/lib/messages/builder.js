@@ -1,6 +1,6 @@
 'use strict';
 
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 var Inventory = require('../inventory');
 
 function builder(options) {
@@ -32,11 +32,7 @@ function builder(options) {
       protocolVersion: options.protocolVersion,
       network: options.network
     },
-    inventoryCommands: [
-      'getdata',
-      'inv',
-      'notfound'
-    ],
+    inventoryCommands: ['getdata', 'inv', 'notfound'],
     commandsMap: {
       version: 'Version',
       verack: 'VerAck',
@@ -82,7 +78,6 @@ function builder(options) {
   });
 
   exported.inventoryCommands.forEach(function(command) {
-
     // add forTransaction methods
     exported.commands[command].forTransaction = function forTransaction(hash) {
       return new exported.commands[command]([Inventory.forTransaction(hash)]);
@@ -97,11 +92,9 @@ function builder(options) {
     exported.commands[command].forFilteredBlock = function forFilteredBlock(hash) {
       return new exported.commands[command]([Inventory.forFilteredBlock(hash)]);
     };
-
   });
 
   return exported;
-
 }
 
 module.exports = builder;

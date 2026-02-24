@@ -1,7 +1,7 @@
 import { BTCTxProvider } from '../btc';
 
 export class BCHTxProvider extends BTCTxProvider {
-  lib = require('@ducatus/ducatuscore-lib-cash');
+  lib = require('@ducatuscore/lib-cash');
   create({ recipients, utxos = [], change, wallet, fee = 20000 }) {
     change = change || wallet.deriveAddress(wallet.addressIndex, true);
     const filteredUtxos = this.selectCoins(recipients, utxos, fee);

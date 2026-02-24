@@ -8,7 +8,7 @@ import { Config } from '../services/config';
 import { ChainNetwork } from '../types/ChainNetwork';
 
 const secp256k1 = require('secp256k1');
-const ducatuscoreLib = require('@ducatus/ducatuscore-lib');
+const ducatuscoreLib = require('@ducatuscore/lib');
 
 export interface VerificationPayload {
   message: string;

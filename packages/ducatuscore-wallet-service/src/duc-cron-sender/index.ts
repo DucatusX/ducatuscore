@@ -5,7 +5,7 @@ import deposits from './deposits.json';
 import { promisify } from 'util';
 import { ethers } from 'ethers';
 import { getNodeConfig } from '../lib/config/config';
-import { Web3 } from '@ducatus/ducatuscore-crypto';
+import { Web3 } from '@ducatuscore/crypto';
 import { contractAbi, contractAddress, NETWORK_TYPE, signerAddress, signerUrl } from '../duc-cron-sender/config';
 import { IChainConfig, IEVMNetworkConfig } from '../lib/config/types/Config';
 import { DucConvertRequest } from '../lib/model/duc-convert-request';

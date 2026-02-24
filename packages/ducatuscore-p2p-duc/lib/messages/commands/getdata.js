@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var utils = require('../utils');
 var BufferReader = ducatuscore.encoding.BufferReader;
 var BufferWriter = ducatuscore.encoding.BufferWriter;
@@ -30,7 +30,7 @@ GetdataMessage.prototype.setPayload = function(payload) {
   for (var i = 0; i < count; i++) {
     var type = parser.readUInt32LE();
     var hash = parser.read(32);
-    this.inventory.push({type: type, hash: hash});
+    this.inventory.push({ type: type, hash: hash });
   }
 
   utils.checkFinished(parser);

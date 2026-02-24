@@ -1,5 +1,5 @@
-import { Transactions, Validation } from '@ducatus/ducatuscore-crypto';
-import { Web3 } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation } from '@ducatuscore/crypto';
+import { Web3 } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { IAddress } from 'src/lib/model/address';
 import { IChain } from '..';
@@ -181,12 +181,7 @@ export class DucxChain implements IChain {
   }
 
   getDucatuscoreTx(txp, opts = { signed: true }) {
-    const {
-      data,
-      outputs,
-      tokenAddress,
-      tokenId
-    } = txp;
+    const { data, outputs, tokenAddress, tokenId } = txp;
     const isERC20 = tokenAddress;
     const isERC721 = isERC20 && tokenId;
 
@@ -269,49 +264,46 @@ export class DucxChain implements IChain {
   }
 
   selectTxInputs(server, txp, wallet, opts, cb) {
-    server.getBalance(
-      { wallet, tokenAddress: opts.tokenAddress},
-      (err, balance) => {
-        if (err) return cb(err);
+    server.getBalance({ wallet, tokenAddress: opts.tokenAddress }, (err, balance) => {
+      if (err) return cb(err);
 
-        const { totalAmount, availableAmount } = balance;
+      const { totalAmount, availableAmount } = balance;
 
-        const txpTotalAmount = txp.getTotalAmount(opts);
+      const txpTotalAmount = txp.getTotalAmount(opts);
 
-        if (totalAmount < txpTotalAmount) {
-          return cb(Errors.INSUFFICIENT_FUNDS);
-        } else if (availableAmount < txpTotalAmount) {
-          return cb(Errors.LOCKED_FUNDS);
-        } else {
-          if (opts.tokenAddress || opts.multisigContractAddress) {
-            // ETH linked wallet balance
-            server.getBalance({}, (err, ethBalance) => {
-              if (err) return cb(err);
-              const { totalAmount, availableAmount } = ethBalance;
-              if (totalAmount < txp.fee) {
-                return cb(this.getInsufficientFeeError(txp));
-              } else if (availableAmount < txp.fee) {
-                return cb(this.getLockedFeeError(txp));
-              } else {
-                return cb(this.checkTx(txp));
+      if (totalAmount < txpTotalAmount) {
+        return cb(Errors.INSUFFICIENT_FUNDS);
+      } else if (availableAmount < txpTotalAmount) {
+        return cb(Errors.LOCKED_FUNDS);
+      } else {
+        if (opts.tokenAddress || opts.multisigContractAddress) {
+          // ETH linked wallet balance
+          server.getBalance({}, (err, ethBalance) => {
+            if (err) return cb(err);
+            const { totalAmount, availableAmount } = ethBalance;
+            if (totalAmount < txp.fee) {
+              return cb(this.getInsufficientFeeError(txp));
+            } else if (availableAmount < txp.fee) {
+              return cb(this.getLockedFeeError(txp));
+            } else {
+              return cb(this.checkTx(txp));
+            }
+          });
+        } else if (availableAmount - txp.fee < txpTotalAmount) {
+          return cb(
+            new ClientError(
+              Errors.codes.INSUFFICIENT_FUNDS_FOR_FEE,
+              `${Errors.INSUFFICIENT_FUNDS_FOR_FEE.message}. RequiredFee: ${txp.fee}`,
+              {
+                requiredFee: txp.fee
               }
-            });
-          } else if (availableAmount - txp.fee < txpTotalAmount) {
-            return cb(
-              new ClientError(
-                Errors.codes.INSUFFICIENT_FUNDS_FOR_FEE,
-                `${Errors.INSUFFICIENT_FUNDS_FOR_FEE.message}. RequiredFee: ${txp.fee}`,
-                {
-                  requiredFee: txp.fee
-                }
-              )
-            );
-          } else {
-            return cb(this.checkTx(txp));
-          }
+            )
+          );
+        } else {
+          return cb(this.checkTx(txp));
         }
       }
-    );
+    });
   }
 
   getInsufficientFeeError(txp) {

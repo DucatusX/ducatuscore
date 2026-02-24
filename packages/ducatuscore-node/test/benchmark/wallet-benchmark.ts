@@ -1,4 +1,4 @@
-import { Wallet } from '@ducatus/ducatuscore-client';
+import { Wallet } from '@ducatuscore/client';
 import * as _ from 'lodash';
 import { CoinStorage } from '../../src/models/coin';
 import { Storage } from '../../src/services/storage';

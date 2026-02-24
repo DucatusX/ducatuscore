@@ -1,6 +1,6 @@
 'use strict';
 
-import * as CWC from '@ducatus/ducatuscore-crypto';
+import * as CWC from '@ducatuscore/crypto';
 import { EventEmitter } from 'events';
 import _, { debounce } from 'lodash';
 import sjcl from 'sjcl';
@@ -25,7 +25,7 @@ var Ducatuscore_ = {
   xrp: CWC.DucatuscoreLib,
   bnb: CWC.DucatuscoreLib,
 };
-var Mnemonic = require('@ducatus/ducatuscore-mnemonic');
+var Mnemonic = require('@ducatuscore/mnemonic');
 var url = require('url');
 var querystring = require('querystring');
 

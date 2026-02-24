@@ -1,12 +1,6 @@
 'use strict';
 
-import {
-  Deriver,
-  DucatuscoreLib,
-  DucatuscoreLibCash,
-  DucatuscoreLibDuc,
-  Transactions
-} from '@ducatus/ducatuscore-crypto';
+import { Deriver, DucatuscoreLib, DucatuscoreLibCash, DucatuscoreLibDuc, Transactions } from '@ducatuscore/crypto';
 
 import * as _ from 'lodash';
 import { Constants } from './constants';
@@ -67,7 +61,7 @@ export class Utils {
       _.defaults(
         {
           ks: 128,
-          iter: 1
+          iter: 1,
         },
         SJCL
       )
@@ -148,14 +142,9 @@ export class Utils {
 
   static privateKeyToAESKey(privKey) {
     $.checkArgument(privKey && _.isString(privKey));
-    $.checkArgument(
-      Ducatuscore.PrivateKey.isValid(privKey),
-      'The private key received is invalid'
-    );
+    $.checkArgument(Ducatuscore.PrivateKey.isValid(privKey), 'The private key received is invalid');
     var pk = Ducatuscore.PrivateKey.fromString(privKey);
-    return Ducatuscore.crypto.Hash.sha256(pk.toBuffer())
-      .slice(0, 16)
-      .toString('base64');
+    return Ducatuscore.crypto.Hash.sha256(pk.toBuffer()).slice(0, 16).toString('base64');
   }
 
   static getCopayerHash(name, xPubKey, requestPubKey) {
@@ -182,20 +171,12 @@ export class Utils {
     return { _input, addressIndex, isChange };
   }
 
-  static deriveAddress(
-    scriptType,
-    publicKeyRing,
-    path,
-    m,
-    network,
-    chain,
-    escrowInputs?
-  ) {
+  static deriveAddress(scriptType, publicKeyRing, path, m, network, chain, escrowInputs?) {
     $.checkArgument(_.includes(_.values(Constants.SCRIPT_TYPES), scriptType));
 
     chain = chain || 'btc';
     var ducatuscore = Ducatuscore_[chain];
-    var publicKeys = _.map(publicKeyRing, item => {
+    var publicKeys = _.map(publicKeyRing, (item) => {
       var xpub = new ducatuscore.HDPublicKey(item.xPubKey);
       return xpub.deriveChild(path).publicKey;
     });
@@ -215,50 +196,24 @@ export class Utils {
       case Constants.SCRIPT_TYPES.P2SH:
         if (escrowInputs) {
           var xpub = new ducatuscore.HDPublicKey(publicKeyRing[0].xPubKey);
-          const inputPublicKeys = escrowInputs.map(
-            input => xpub.deriveChild(input.path).publicKey
-          );
-          ducatuscoreAddress = ducatuscore.Address.createEscrow(
-            inputPublicKeys,
-            publicKeys[0],
-            network
-          );
+          const inputPublicKeys = escrowInputs.map((input) => xpub.deriveChild(input.path).publicKey);
+          ducatuscoreAddress = ducatuscore.Address.createEscrow(inputPublicKeys, publicKeys[0], network);
           publicKeys = [publicKeys[0], ...inputPublicKeys];
         } else {
-          ducatuscoreAddress = ducatuscore.Address.createMultisig(
-            publicKeys,
-            m,
-            network
-          );
+          ducatuscoreAddress = ducatuscore.Address.createMultisig(publicKeys, m, network);
         }
         break;
       case Constants.SCRIPT_TYPES.P2WPKH:
-        ducatuscoreAddress = ducatuscore.Address.fromPublicKey(
-          publicKeys[0],
-          network,
-          'witnesspubkeyhash'
-        );
+        ducatuscoreAddress = ducatuscore.Address.fromPublicKey(publicKeys[0], network, 'witnesspubkeyhash');
         break;
       case Constants.SCRIPT_TYPES.P2PKH:
-        $.checkState(
-          _.isArray(publicKeys) && publicKeys.length == 1,
-          'publicKeys array undefined'
-        );
+        $.checkState(_.isArray(publicKeys) && publicKeys.length == 1, 'publicKeys array undefined');
         if (Constants.UTXO_CHAINS.includes(chain)) {
-          ducatuscoreAddress = ducatuscore.Address.fromPublicKey(
-            publicKeys[0],
-            network
-          );
+          ducatuscoreAddress = ducatuscore.Address.fromPublicKey(publicKeys[0], network);
         } else {
           const { addressIndex, isChange } = this.parseDerivationPath(path);
           const [{ xPubKey }] = publicKeyRing;
-          ducatuscoreAddress = Deriver.deriveAddress(
-            chain.toUpperCase(),
-            network,
-            xPubKey,
-            addressIndex,
-            isChange
-          );
+          ducatuscoreAddress = Deriver.deriveAddress(chain.toUpperCase(), network, xPubKey, addressIndex, isChange);
         }
         break;
     }
@@ -266,7 +221,7 @@ export class Utils {
     return {
       address: ducatuscoreAddress.toString(true),
       path,
-      publicKeys: _.invokeMap(publicKeys, 'toString')
+      publicKeys: _.invokeMap(publicKeys, 'toString'),
     };
   }
 
@@ -288,16 +243,12 @@ export class Utils {
   }
 
   static signRequestPubKey(requestPubKey, xPrivKey) {
-    var priv = new Ducatuscore.HDPrivateKey(xPrivKey).deriveChild(
-      Constants.PATHS.REQUEST_KEY_AUTH
-    ).privateKey;
+    var priv = new Ducatuscore.HDPrivateKey(xPrivKey).deriveChild(Constants.PATHS.REQUEST_KEY_AUTH).privateKey;
     return this.signMessage(requestPubKey, priv);
   }
 
   static verifyRequestPubKey(requestPubKey, signature, xPubKey) {
-    var pub = new Ducatuscore.HDPublicKey(xPubKey).deriveChild(
-      Constants.PATHS.REQUEST_KEY_AUTH
-    ).publicKey;
+    var pub = new Ducatuscore.HDPublicKey(xPubKey).deriveChild(Constants.PATHS.REQUEST_KEY_AUTH).publicKey;
     return this.verifyMessage(requestPubKey, signature, pub.toString());
   }
 
@@ -338,16 +289,8 @@ export class Utils {
     var precision: string = opts.fullPrecision ? 'full' : 'short';
     var decimals = opts.decimals ? opts.decimals[precision] : u[precision];
     var toSatoshis = opts.toSatoshis ? opts.toSatoshis : u.toSatoshis;
-    var amount = clipDecimals(
-      satoshis / toSatoshis,
-      decimals.maxDecimals
-    ).toFixed(decimals.maxDecimals);
-    return addSeparators(
-      amount,
-      opts.thousandsSeparator || ',',
-      opts.decimalSeparator || '.',
-      decimals.minDecimals
-    );
+    var amount = clipDecimals(satoshis / toSatoshis, decimals.maxDecimals).toFixed(decimals.maxDecimals);
+    return addSeparators(amount, opts.thousandsSeparator || ',', opts.decimalSeparator || '.', decimals.minDecimals);
   }
 
   static buildTx(txp) {
@@ -372,7 +315,7 @@ export class Utils {
       switch (txp.addressType) {
         case Constants.SCRIPT_TYPES.P2WSH:
         case Constants.SCRIPT_TYPES.P2SH:
-          _.each(txp.inputs, i => {
+          _.each(txp.inputs, (i) => {
             t.from(i, i.publicKeys, txp.requiredSignatures);
           });
           break;
@@ -385,16 +328,13 @@ export class Utils {
       if (txp.toAddress && txp.amount && !txp.outputs) {
         t.to(txp.toAddress, txp.amount);
       } else if (txp.outputs) {
-        _.each(txp.outputs, o => {
-          $.checkState(
-            o.script || o.toAddress,
-            'Output should have either toAddress or script specified'
-          );
+        _.each(txp.outputs, (o) => {
+          $.checkState(o.script || o.toAddress, 'Output should have either toAddress or script specified');
           if (o.script) {
             t.addOutput(
               new ducatuscore.Transaction.Output({
                 script: o.script,
-                satoshis: o.amount
+                satoshis: o.amount,
               })
             );
           } else {
@@ -406,10 +346,7 @@ export class Utils {
       t.fee(txp.fee);
 
       if (txp.instantAcceptanceEscrow && txp.escrowAddress) {
-        t.escrow(
-          txp.escrowAddress.address,
-          txp.instantAcceptanceEscrow + txp.fee
-        );
+        t.escrow(txp.escrowAddress.address, txp.instantAcceptanceEscrow + txp.fee);
       }
 
       t.change(txp.changeAddress.address);
@@ -418,15 +355,15 @@ export class Utils {
 
       // Shuffle outputs for improved privacy
       if (t.outputs.length > 1) {
-        var outputOrder = _.reject(txp.outputOrder, order => {
+        var outputOrder = _.reject(txp.outputOrder, (order) => {
           return order >= t.outputs.length;
         });
         $.checkState(
           t.outputs.length == outputOrder.length,
           'Failed state: t.ouputs.length == outputOrder.length at buildTx()'
         );
-        t.sortOutputs(outputs => {
-          return _.map(outputOrder, i => {
+        t.sortOutputs((outputs) => {
+          return _.map(outputOrder, (i) => {
             return outputs[i];
           });
         });
@@ -448,10 +385,7 @@ export class Utils {
         0
       );
 
-      $.checkState(
-        totalInputs - totalOutputs >= 0,
-        'Failed state: totalInputs - totalOutputs >= 0 at buildTx'
-      );
+      $.checkState(totalInputs - totalOutputs >= 0, 'Failed state: totalInputs - totalOutputs >= 0 at buildTx');
       $.checkState(
         totalInputs - totalOutputs <= Defaults.MAX_TX_FEE(chain),
         'Failed state: totalInputs - totalOutputs <= Defaults.MAX_TX_FEE(chain) at buildTx'
@@ -469,14 +403,14 @@ export class Utils {
         multiSendContractAddress,
         isTokenSwap,
         gasLimit,
-        tokenId
+        tokenId,
       } = txp;
-      const recipients = outputs.map(output => {
+      const recipients = outputs.map((output) => {
         return {
           amount: output.amount,
           address: output.toAddress,
           data: output.data,
-          gasLimit: output.gasLimit
+          gasLimit: output.gasLimit,
         };
       });
       // Backwards compatibility DWC <= 8.9.0
@@ -493,10 +427,10 @@ export class Utils {
       let _chain = isERC721
         ? chainName + 'ERC721'
         : isMULTISIG
-          ? chainName + 'MULTISIG'
-          : isERC20
-            ? chainName + 'ERC20'
-            : chainName;
+        ? chainName + 'MULTISIG'
+        : isERC20
+        ? chainName + 'ERC20'
+        : chainName;
 
       if (multiSendContractAddress) {
         let multiSendParams = {
@@ -504,7 +438,7 @@ export class Utils {
           recipients,
           chain: _chain,
           contractAddress: multiSendContractAddress,
-          gasLimit
+          gasLimit,
         };
         unsignedTxs.push(Transactions.create({ ...txp, ...multiSendParams }));
       } else {
@@ -515,7 +449,7 @@ export class Utils {
             tag: destinationTag ? Number(destinationTag) : undefined,
             chain: _chain,
             nonce: Number(txp.nonce) + Number(index),
-            recipients: [recipients[index]]
+            recipients: [recipients[index]],
           });
           unsignedTxs.push(rawTx);
         }

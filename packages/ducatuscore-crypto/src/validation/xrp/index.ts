@@ -1,4 +1,4 @@
-import Ducatuscore from '@ducatus/ducatuscore-lib';
+import Ducatuscore from '@ducatuscore/lib';
 import baseX from 'base-x';
 import { IValidation } from '..';
 

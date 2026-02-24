@@ -2,7 +2,7 @@
 
 var spec = {
   name: 'P2P',
-  message: 'Internal Error on @ducatus/ducatuscore-p2p Module {0}'
+  message: 'Internal Error on @ducatuscore/p2p Module {0}'
 };
 
-module.exports = require('@ducatus/ducatuscore-lib-cash').errors.extend(spec);
+module.exports = require('@ducatuscore/lib-cash').errors.extend(spec);

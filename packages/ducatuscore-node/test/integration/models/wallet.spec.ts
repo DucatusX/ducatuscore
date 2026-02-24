@@ -1,4 +1,4 @@
-import { Wallet } from '@ducatus/ducatuscore-client';
+import { Wallet } from '@ducatuscore/client';
 import { expect } from 'chai';
 import config from '../../../src/config';
 import { WalletStorage } from '../../../src/models/wallet';
@@ -92,11 +92,14 @@ describe('Wallet Model', function() {
 
       await unlockedWallet.importKeys(importAddressJSON);
 
-      const findWalletResult = await WalletStorage.collection.findOne({
-        name: walletName,
-        chain,
-        network
-      }, { sort: { _id: -1 }});
+      const findWalletResult = await WalletStorage.collection.findOne(
+        {
+          name: walletName,
+          chain,
+          network
+        },
+        { sort: { _id: -1 } }
+      );
 
       expect(findWalletResult?._id).to.exist;
       const findAddressResult = await WalletAddressStorage.collection
