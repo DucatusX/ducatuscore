@@ -1,6 +1,6 @@
 {
   "name": "@ducatuscore/crypto-rpc",
-  "version": "10.1.26",
+  "version": "10.1.27",
   "description": "rpc wrapper for multiple rpcs",
   "license": "ISC",
   "main": "index.js",

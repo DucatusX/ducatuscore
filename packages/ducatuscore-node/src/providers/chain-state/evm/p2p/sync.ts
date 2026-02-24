@@ -1,4 +1,4 @@
-import { CryptoRpc } from '@ducatus/crypto-rpc';
+import { CryptoRpc } from '@ducatuscore/crypto-rpc';
 import { EventEmitter } from 'events';
 import * as os from 'os';
 import { threadId, Worker as Thread } from 'worker_threads';
@@ -84,8 +84,8 @@ export class MultiThreadSync extends EventEmitter {
       this.syncInterval = setInterval(() => {
         if (this.resolvingGaps) {
           logger.info(
-            `${timestamp()} | Filling gaps... | Chain: ${chain} | Network: ${network} | On gap ${this.gapsLength - this.syncQueue.length} of ${this.gapsLength} | Height: ${this.syncQueue[0] || this.syncHeight
-            }`
+            `${timestamp()} | Filling gaps... | Chain: ${chain} | Network: ${network} | On gap ${this.gapsLength -
+              this.syncQueue.length} of ${this.gapsLength} | Height: ${this.syncQueue[0] || this.syncHeight}`
           );
         } else {
           const blocksProcessed = this.currentHeight - startHeight;
@@ -93,7 +93,10 @@ export class MultiThreadSync extends EventEmitter {
           logger.info(
             `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} | ${(blocksProcessed / elapsedMinutes)
               .toFixed(2)
-              .padStart(8)} blocks/min | Height: ${this.currentHeight} | Remained blocks: ${Math.max(this.bestBlock - this.currentHeight, 0)}`
+              .padStart(8)} blocks/min | Height: ${this.currentHeight} | Remained blocks: ${Math.max(
+              this.bestBlock - this.currentHeight,
+              0
+            )}`
           );
         }
       }, oneSecond);
@@ -107,7 +110,7 @@ export class MultiThreadSync extends EventEmitter {
           this.threads[i].postMessage({ blockNum: this.currentHeight++ });
         }
       }
-    } catch (err: any) {
+    } catch (err) {
       logger.error(`Error syncing ${chain} ${network} :: ${err.message}`);
       await wait(2000);
       this.syncing = false;
@@ -144,7 +147,7 @@ export class MultiThreadSync extends EventEmitter {
     // If last block was found and there's more to sync
     if (gimmeAnotherBlock && moreBlocksToGive) {
       // If queue is empty, then !atTip must be true, so add next block to queue
-      if (this.syncQueue.length === 0) {   
+      if (this.syncQueue.length === 0) {
         this.addBlockToQueue(this.syncHeight++);
       }
       const blockNum = this.syncQueue.shift();

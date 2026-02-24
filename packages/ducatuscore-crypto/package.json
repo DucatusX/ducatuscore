@@ -1,6 +1,6 @@
 {
   "name": "@ducatuscore/crypto",
-  "version": "10.1.26",
+  "version": "10.1.27",
   "description": "A multi-currency support library for address derivation, private key creation, and transaction creation",
   "license": "ISC",
   "main": "./ts_build/src/index.js",
@@ -15,13 +15,13 @@
     "pub": "npm run compile && npm publish --access public"
   },
   "dependencies": {
-    "@ducatuscore/lib": "^10.1.26",
-    "@ducatuscore/lib-cash": "^10.1.26",
-    "@ducatuscore/lib-duc": "^10.1.26",
+    "@ducatuscore/lib": "^10.1.27",
+    "@ducatuscore/lib-cash": "^10.1.27",
+    "@ducatuscore/lib-duc": "^10.1.27",
     "ethers": "^5.0.12",
     "info": "0.0.6-beta.0",
     "ripple-binary-codec": "0.2.7",
-    "ripple-keypairs": "git+https://git@github.com/bitpay/ripple-keypairs.git#8d3a4643a8ddfce8222786e1e5a3e85a89a5b7f5",
+    "ripple-keypairs": "git+https://github.com/bitpay/ripple-keypairs.git#8d3a4643a8ddfce8222786e1e5a3e85a89a5b7f5",
     "web3": "1.4.0"
   },
   "devDependencies": {

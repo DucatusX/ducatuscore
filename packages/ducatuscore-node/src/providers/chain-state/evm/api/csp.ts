@@ -1,4 +1,4 @@
-import { CryptoRpc } from '@ducatus/crypto-rpc';
+import { CryptoRpc } from '@ducatuscore/crypto-rpc';
 import { ObjectID } from 'mongodb';
 import { Readable } from 'stream';
 import Web3 from 'web3';
@@ -116,24 +116,24 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       cacheKey,
       async () => {
         const txs = await EVMTransactionStorage.collection
-        .find({ chain, network, blockHeight: { $gt: 0 } })
-        .project({ gasPrice: 1, blockHeight: 1 })
-        .sort({ blockHeight: -1 })
-        .limit(20 * 200)
-        .toArray();
+          .find({ chain, network, blockHeight: { $gt: 0 } })
+          .project({ gasPrice: 1, blockHeight: 1 })
+          .sort({ blockHeight: -1 })
+          .limit(20 * 200)
+          .toArray();
 
-      const blockGasPrices = txs
-        .map(tx => Number(tx.gasPrice))
-        .filter(gasPrice => gasPrice)
-        .sort((a, b) => b - a);
+        const blockGasPrices = txs
+          .map(tx => Number(tx.gasPrice))
+          .filter(gasPrice => gasPrice)
+          .sort((a, b) => b - a);
 
-      const whichQuartile = Math.min(target, 4) || 1;
-      const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
+        const whichQuartile = Math.min(target, 4) || 1;
+        const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
 
-      const roundedGwei = (quartileMedian / 1e9).toFixed(2);
-      const gwei = Number(roundedGwei) || 0;
-      const feerate = gwei * 1e9;
-      return { feerate, blocks: target };
+        const roundedGwei = (quartileMedian / 1e9).toFixed(2);
+        const gwei = Number(roundedGwei) || 0;
+        const feerate = gwei * 1e9;
+        return { feerate, blocks: target };
       },
       CacheStorage.Times.Minute
     );
@@ -500,7 +500,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
           // Gas estimation might fail with `insufficient funds` if value is higher than balance for a normal send.
           // We want this method to give a blind fee estimation, though, so we should not include the value
           // unless it's needed for estimating smart contract execution.
-          _value = web3.utils.toHex(value)
+          _value = web3.utils.toHex(value);
         }
 
         const opts = {
@@ -564,7 +564,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
 
       try {
         await WalletAddressStorage.collection.bulkWrite(walletAddressInserts);
-      } catch (err: any) {
+      } catch (err) {
         if (err.code !== 11000) {
           throw err;
         }

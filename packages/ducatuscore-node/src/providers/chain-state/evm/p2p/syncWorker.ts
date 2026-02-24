@@ -1,4 +1,4 @@
-import { CryptoRpc } from '@ducatus/crypto-rpc';
+import { CryptoRpc } from '@ducatuscore/crypto-rpc';
 import Web3 from 'web3';
 import * as worker from 'worker_threads';
 import logger from '../../../../logger';
@@ -77,7 +77,7 @@ export class SyncWorker {
         blockNum: block.number,
         threadId: worker.threadId
       });
-    } catch (err: any) {
+    } catch (err) {
       logger.debug(`Syncing thread ${worker.threadId} error: ${err.stack}`);
 
       let error = err.message;
