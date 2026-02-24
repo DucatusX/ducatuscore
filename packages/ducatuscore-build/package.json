@@ -1,6 +1,6 @@
 {
   "name": "@ducatuscore/build",
-  "version": "10.1.27",
+  "version": "10.1.28",
   "description": "A helper for common tasks to build ducatuscore modules'",
   "license": "ISC",
   "main": "index.js",
