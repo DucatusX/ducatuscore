@@ -1233,7 +1233,7 @@ export class WalletService implements IWalletService {
       }
 
       if (wallet.coin != 'ducx') {
-        opts.ducxMokenAddresses = null;
+        opts.ducxTokenAddresses = null;
         opts.multisigDucxInfo = null;
       }
 

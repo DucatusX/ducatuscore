@@ -2747,6 +2747,17 @@ export class API extends EventEmitter {
         (err) => {
           if (err) return callback(err);
           const allWallets = foundWallets.concat(addtFoundWallets);
+          const getTokenByAddress = (address, ...tokenMaps) => {
+            if (!address) return null;
+            const target = address.toLowerCase();
+            for (const tokenMap of tokenMaps) {
+              if (!tokenMap) continue;
+              if (tokenMap[address]) return tokenMap[address];
+              const match = _.find(tokenMap, (_token, key) => key.toLowerCase() === target);
+              if (match) return match;
+            }
+            return null;
+          };
           // generate clients
           async.each(
             allWallets,
@@ -2789,7 +2800,7 @@ export class API extends EventEmitter {
                     customTokensData = null;
                   }
                   _.each(tokenAddresses, (t) => {
-                    const token = Constants.ETH_TOKEN_OPTS[t] || (customTokensData && customTokensData[t]);
+                    const token = getTokenByAddress(t, Constants.ETH_TOKEN_OPTS, customTokensData);
                     if (!token) {
                       log.warn(`Token ${t} unknown`);
                       return;
@@ -2819,7 +2830,7 @@ export class API extends EventEmitter {
                     const tokenAddresses = info.tokenAddresses;
                     if (!_.isEmpty(tokenAddresses)) {
                       _.each(tokenAddresses, (t) => {
-                        const token = Constants.ETH_TOKEN_OPTS[t];
+                        const token = getTokenByAddress(t, Constants.ETH_TOKEN_OPTS);
                         if (!token) {
                           log.warn(`Token ${t} unknown`);
                           return;
@@ -2854,7 +2865,7 @@ export class API extends EventEmitter {
                     customTokensData = null;
                   }
                   _.each(ducxTokenAddresses, (t) => {
-                    const token = Constants.DUCX_TOKEN_OPTS[t] || (customTokensData && customTokensData[t]);
+                    const token = getTokenByAddress(t, Constants.DUCX_TOKEN_OPTS, customTokensData);
                     if (!token) {
                       log.warn(`Token ${t} unknown`);
                       return;
@@ -2884,7 +2895,7 @@ export class API extends EventEmitter {
                     const ducxTokenAddresses = info.ducxTokenAddresses;
                     if (!_.isEmpty(ducxTokenAddresses)) {
                       _.each(ducxTokenAddresses, (t) => {
-                        const token = Constants.DUCX_TOKEN_OPTS[t];
+                        const token = getTokenByAddress(t, Constants.DUCX_TOKEN_OPTS);
                         if (!token) {
                           log.warn(`Token ${t} unknown`);
                           return;
@@ -2918,7 +2929,7 @@ export class API extends EventEmitter {
                     customTokensData = null;
                   }
                   _.each(bnbTokenAddresses, (t) => {
-                    const token = Constants.BNB_TOKEN_OPTS[t] || (customTokensData && customTokensData[t]);
+                    const token = getTokenByAddress(t, Constants.BNB_TOKEN_OPTS, customTokensData);
                     if (!token) {
                       log.warn(`Token ${t} unknown`);
                       return;
@@ -2948,7 +2959,7 @@ export class API extends EventEmitter {
                     const bnbTokenAddresses = info.bnbTokenAddresses;
                     if (!_.isEmpty(bnbTokenAddresses)) {
                       _.each(bnbTokenAddresses, (t) => {
-                        const token = Constants.BNB_TOKEN_OPTS[t];
+                        const token = getTokenByAddress(t, Constants.BNB_TOKEN_OPTS);
                         if (!token) {
                           log.warn(`Token ${t} unknown`);
                           return;
