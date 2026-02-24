@@ -1,7 +1,7 @@
 {
   "name": "@ducatuscore/client",
   "description": "Wallet client for Ducatuscore node",
-  "version": "10.1.25",
+  "version": "10.1.26",
   "license": "ISC",
   "main": "./ts_build/index.js",
   "types": "./ts_build/index.d.ts",
@@ -19,8 +19,8 @@
     "fix": "tslint --fix -c ../../tslint.json 'src/**/*.ts'"
   },
   "dependencies": {
-    "@ducatuscore/crypto": "^10.1.25",
-    "@ducatuscore/mnemonic": "^10.1.25",
+    "@ducatuscore/crypto": "^10.1.26",
+    "@ducatuscore/mnemonic": "^10.1.26",
     "JSONStream": "~1.3.1",
     "async": "2.5.0",
     "bcrypt": "5.1.0",
@@ -55,5 +55,5 @@
     "sinon": "4.4.8",
     "typescript": "4.9.4"
   },
-  "gitHead": "7b0089a2d88878d468523d2f3c7f1d75e90a94a9"
+  "gitHead": "bab07a4f326ceddd954145566c6d2ee019471625"
 }

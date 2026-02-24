@@ -1,6 +1,6 @@
 {
   "name": "@ducatuscore/p2p-cash",
-  "version": "10.1.25",
+  "version": "10.1.26",
   "description": "Interface to the bitcoin P2P network for ducatuscore",
   "license": "ISC",
   "main": "index.js",
@@ -11,18 +11,18 @@
     "pub": "npm publish --access public"
   },
   "dependencies": {
-    "@ducatuscore/lib": "^10.1.25",
-    "@ducatuscore/lib-cash": "^10.1.25",
+    "@ducatuscore/lib": "^10.1.26",
+    "@ducatuscore/lib-cash": "^10.1.26",
     "bloom-filter": "^0.2.0",
     "buffers": "bitpay/node-buffers#v0.1.2-bitpay",
     "socks5-client": "^0.3.6"
   },
   "devDependencies": {
-    "@ducatuscore/build": "^10.1.25",
+    "@ducatuscore/build": "^10.1.26",
     "brfs": "^1.2.0",
     "chai": "~1.10.0",
     "gulp": "^4.0.0",
     "sinon": "^1.12.2"
   },
-  "gitHead": "7b0089a2d88878d468523d2f3c7f1d75e90a94a9"
+  "gitHead": "bab07a4f326ceddd954145566c6d2ee019471625"
 }
