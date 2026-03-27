@@ -2066,19 +2066,19 @@ export class WalletService implements IWalletService {
         });
 
         if (opts.chain === 'ducx') {
-          const urgent = values.find(level => level.level === 'urgent');
-          const urgentDefault = feeLevels.find(level => level.name === 'urgent');
+          const normal = values.find(level => level.level === 'normal');
+          const normalDefault = feeLevels.find(level => level.name === 'normal');
 
-          if (urgent && urgentDefault && _.isNumber(urgent.feePerKb) && _.isNumber(urgentDefault.defaultValue) && urgentDefault.defaultValue > 0) {
-            const derivedLevels = ['priority', 'normal', 'economy', 'superEconomy'];
+          if (normal && normalDefault && _.isNumber(normal.feePerKb) && _.isNumber(normalDefault.defaultValue) && normalDefault.defaultValue > 0) {
+            const derivedLevels = ['urgent', 'priority', 'economy', 'superEconomy'];
             for (const levelName of derivedLevels) {
               const valueLevel = values.find(level => level.level === levelName);
               const defaultLevel = feeLevels.find(level => level.name === levelName);
               if (!valueLevel || !defaultLevel || !_.isNumber(defaultLevel.defaultValue)) {
                 continue;
               }
-              const ratio = defaultLevel.defaultValue / urgentDefault.defaultValue;
-              valueLevel.feePerKb = +(urgent.feePerKb * ratio).toFixed(0);
+              const ratio = defaultLevel.defaultValue / normalDefault.defaultValue;
+              valueLevel.feePerKb = +(normal.feePerKb * ratio).toFixed(0);
             }
           }
         }

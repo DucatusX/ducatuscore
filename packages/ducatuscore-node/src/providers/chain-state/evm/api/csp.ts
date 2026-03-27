@@ -29,7 +29,6 @@ import {
   UpdateWalletParams
 } from '../../../../types/namespaces/ChainStateProvider';
 import { partition } from '../../../../utils/partition';
-import { StatsUtil } from '../../../../utils/stats';
 import { ERC20Abi } from '../abi/erc20';
 import { MultisendAbi } from '../abi/multisend';
 import { EVMBlockStorage } from '../models/block';
@@ -42,14 +41,14 @@ import { EVMListTransactionsStream } from './transform';
 
 export class BaseEVMStateProvider extends InternalStateProvider implements IChainStateService {
   config: IChainConfig<IEVMNetworkConfig>;
-  static rpcs = {} as { [chain: string]: { [network: string]: { rpc: CryptoRpc; web3: Web3 } } };
+  static rpcs = {} as { [chain: string]: { [network: string]: { rpc: typeof CryptoRpc; web3: Web3 } } };
 
   constructor(public chain: string = 'ETH') {
     super(chain);
     this.config = Config.chains[this.chain] as IChainConfig<IEVMNetworkConfig>;
   }
 
-  async getWeb3(network: string): Promise<{ rpc: CryptoRpc; web3: Web3 }> {
+  async getWeb3(network: string): Promise<{ rpc: typeof CryptoRpc; web3: Web3 }> {
     try {
       if (BaseEVMStateProvider.rpcs[this.chain] && BaseEVMStateProvider.rpcs[this.chain][network]) {
         await BaseEVMStateProvider.rpcs[this.chain][network].web3.eth.getBlockNumber();
@@ -62,7 +61,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       const providerIdx = worker.threadId % (this.config[network].providers || []).length;
       const providerConfig = this.config[network].provider || this.config[network].providers![providerIdx];
       const rpcConfig = { ...providerConfig, chain: this.chain, currencyConfig: {} };
-      const rpc = new CryptoRpc(rpcConfig, {}).get(this.chain);
+      const rpc = new CryptoRpc(rpcConfig).get(this.chain);
       if (BaseEVMStateProvider.rpcs[this.chain]) {
         BaseEVMStateProvider.rpcs[this.chain][network] = { rpc, web3: rpc.web3 };
       } else {
@@ -115,22 +114,9 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     return CacheStorage.getGlobalOrRefresh(
       cacheKey,
       async () => {
-        const txs = await EVMTransactionStorage.collection
-          .find({ chain, network, blockHeight: { $gt: 0 } })
-          .project({ gasPrice: 1, blockHeight: 1 })
-          .sort({ blockHeight: -1 })
-          .limit(20 * 200)
-          .toArray();
-
-        const blockGasPrices = txs
-          .map(tx => Number(tx.gasPrice))
-          .filter(gasPrice => gasPrice)
-          .sort((a, b) => b - a);
-
-        const whichQuartile = Math.min(target, 4) || 1;
-        const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
-
-        const roundedGwei = (quartileMedian / 1e9).toFixed(2);
+        const { web3 } = await this.getWeb3(network);
+        const gasPrice = Number(await web3.eth.getGasPrice());
+        const roundedGwei = (gasPrice / 1e9).toFixed(2);
         const gwei = Number(roundedGwei) || 0;
         const feerate = gwei * 1e9;
         return { feerate, blocks: target };
