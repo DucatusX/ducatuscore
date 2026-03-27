@@ -2067,29 +2067,19 @@ export class WalletService implements IWalletService {
 
         if (opts.chain === 'ducx') {
           const urgent = values.find(level => level.level === 'urgent');
-          const priority = values.find(level => level.level === 'priority');
-          const normal = values.find(level => level.level === 'normal');
           const urgentDefault = feeLevels.find(level => level.name === 'urgent');
-          const priorityDefault = feeLevels.find(level => level.name === 'priority');
-          const normalDefault = feeLevels.find(level => level.name === 'normal');
 
-          if (
-            urgent &&
-            priority &&
-            normal &&
-            urgentDefault &&
-            priorityDefault &&
-            normalDefault &&
-            _.isNumber(urgent.feePerKb) &&
-            _.isNumber(urgentDefault.defaultValue) &&
-            _.isNumber(priorityDefault.defaultValue) &&
-            _.isNumber(normalDefault.defaultValue) &&
-            urgentDefault.defaultValue > 0
-          ) {
-            const priorityRatio = priorityDefault.defaultValue / urgentDefault.defaultValue;
-            const normalRatio = normalDefault.defaultValue / urgentDefault.defaultValue;
-            priority.feePerKb = +(urgent.feePerKb * priorityRatio).toFixed(0);
-            normal.feePerKb = +(urgent.feePerKb * normalRatio).toFixed(0);
+          if (urgent && urgentDefault && _.isNumber(urgent.feePerKb) && _.isNumber(urgentDefault.defaultValue) && urgentDefault.defaultValue > 0) {
+            const derivedLevels = ['priority', 'normal', 'economy', 'superEconomy'];
+            for (const levelName of derivedLevels) {
+              const valueLevel = values.find(level => level.level === levelName);
+              const defaultLevel = feeLevels.find(level => level.name === levelName);
+              if (!valueLevel || !defaultLevel || !_.isNumber(defaultLevel.defaultValue)) {
+                continue;
+              }
+              const ratio = defaultLevel.defaultValue / urgentDefault.defaultValue;
+              valueLevel.feePerKb = +(urgent.feePerKb * ratio).toFixed(0);
+            }
           }
         }
 
