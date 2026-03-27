@@ -78,13 +78,15 @@ export class SyncWorker {
         threadId: worker.threadId
       });
     } catch (err) {
-      logger.debug(`Syncing thread ${worker.threadId} error: ${err.stack}`);
+      const errMessage = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : undefined;
+      logger.debug(`Syncing thread ${worker.threadId} error: ${errStack || errMessage}`);
 
-      let error = err.message;
+      let error: string | null = errMessage;
       if (error === 'Invalid JSON RPC response: ""') {
         error = null;
       }
-      if (error.includes('connect')) {
+      if (error && error.includes('connect')) {
         error = null;
         logger.info(`Syncing thread ${worker.threadId} lost connection to the node. Reconnecting.`);
         await this.connect();

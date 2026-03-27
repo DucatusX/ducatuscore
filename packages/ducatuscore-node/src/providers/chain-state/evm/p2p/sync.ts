@@ -111,7 +111,8 @@ export class MultiThreadSync extends EventEmitter {
         }
       }
     } catch (err) {
-      logger.error(`Error syncing ${chain} ${network} :: ${err.message}`);
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`Error syncing ${chain} ${network} :: ${message}`);
       await wait(2000);
       this.syncing = false;
       return this.sync();

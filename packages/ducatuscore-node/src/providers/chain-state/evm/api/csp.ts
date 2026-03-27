@@ -565,7 +565,13 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       try {
         await WalletAddressStorage.collection.bulkWrite(walletAddressInserts);
       } catch (err) {
-        if (err.code !== 11000) {
+        const isDuplicateKeyError =
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code?: number }).code === 11000;
+
+        if (!isDuplicateKeyError) {
           throw err;
         }
       }
