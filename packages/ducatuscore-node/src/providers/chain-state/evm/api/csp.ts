@@ -116,9 +116,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
       async () => {
         const { web3 } = await this.getWeb3(network);
         const gasPrice = Number(await web3.eth.getGasPrice());
-        const roundedGwei = (gasPrice / 1e9).toFixed(2);
-        const gwei = Number(roundedGwei) || 0;
-        const feerate = gwei * 1e9;
+        const feerate = gasPrice || 0;
         return { feerate, blocks: target };
       },
       CacheStorage.Times.Minute
