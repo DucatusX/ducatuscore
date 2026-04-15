@@ -1139,10 +1139,22 @@ export class ExpressApp {
 
               const walletAddress =
                 mainAddresses && mainAddresses.length ? mainAddresses[0].address : 'unknown';
+              const txList = Array.isArray(txs) ? txs : [];
+              const txSummary = txList.map((tx: any, index: number) => ({
+                index: index + 1,
+                txid: tx?.txid,
+                action: tx?.action,
+                amount: tx?.amount,
+                confirmations: tx?.confirmations,
+                addressTo: tx?.addressTo
+              }));
+
               logger.info(
-                `[DEBUG_TXHISTORY] walletId=${server.walletId} walletAddress=${walletAddress} txHistoryResponse=${JSON.stringify(
-                  txs
-                )}`
+                `[DEBUG_TXHISTORY] walletId=${server.walletId} walletAddress=${walletAddress} txCount=${txList.length}\nsummary=${JSON.stringify(
+                  txSummary,
+                  null,
+                  2
+                )}\nresponse=${JSON.stringify(txs, null, 2)}`
               );
               res.json(txs);
               res.end();
