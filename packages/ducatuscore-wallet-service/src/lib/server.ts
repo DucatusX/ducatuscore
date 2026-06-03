@@ -61,6 +61,7 @@ const Errors = require('./errors/errordefinitions');
 let request = require('request');
 let initialized = false;
 let doNotCheckV8 = false;
+const DEBUG_TXSEND = process.env.DEBUG_TXSEND === 'true';
 
 let lock;
 let storage;
@@ -2807,10 +2808,62 @@ export class WalletService implements IWalletService {
   _broadcastRawTx(chain, network, raw, cb) {
     const bc = this._getBlockchainExplorer(chain, network);
     if (!bc) return cb(new Error('Could not get blockchain explorer instance'));
+
+    if (DEBUG_TXSEND) {
+      logger.info(
+        `[DEBUG_TXSEND] broadcast request walletId=${this.walletId} chain=${chain} network=${network} rawTx=${raw}`
+      );
+    }
+
     bc.broadcast(raw, (err, txid) => {
-      if (err) return cb(err);
+      if (err) {
+        if (DEBUG_TXSEND) {
+          logger.warn(
+            `[DEBUG_TXSEND] broadcast error walletId=${this.walletId} chain=${chain} network=${network} error=${
+              err?.message || err
+            }`
+          );
+        }
+        return cb(err);
+      }
+
+      if (DEBUG_TXSEND) {
+        logger.info(
+          `[DEBUG_TXSEND] broadcast success walletId=${this.walletId} chain=${chain} network=${network} txid=${txid}`
+        );
+      }
+
       return cb(null, txid);
     });
+  }
+
+  _getDebugTxSendDetails(txp) {
+    return {
+      txProposalId: txp.id,
+      txid: txp.txid,
+      walletId: txp.walletId,
+      chain: txp.chain,
+      network: txp.network,
+      from: txp.from,
+      amount: txp.amount,
+      fee: txp.fee,
+      nonce: txp.nonce,
+      gasPrice: txp.gasPrice,
+      gasLimit: txp.gasLimit,
+      data: txp.data,
+      tokenAddress: txp.tokenAddress,
+      multisigContractAddress: txp.multisigContractAddress,
+      multiSendContractAddress: txp.multiSendContractAddress,
+      destinationTag: txp.destinationTag,
+      invoiceID: txp.invoiceID,
+      outputs: (txp.outputs || []).map(output => ({
+        to: output.toAddress || output.address,
+        amount: output.amount,
+        data: output.data,
+        gasLimit: output.gasLimit,
+        script: output.script
+      }))
+    };
   }
 
   /**
@@ -3015,6 +3068,11 @@ export class WalletService implements IWalletService {
             } catch (ex) {
               return cb(ex);
             }
+
+            if (DEBUG_TXSEND) {
+              logger.info(`[DEBUG_TXSEND] tx details ${JSON.stringify(this._getDebugTxSendDetails(txp), null, 2)}`);
+            }
+
             this._broadcastRawTx(wallet.chain, wallet.network, raw, (err, txid) => {
               if (err || txid != txp.txid) {
                 if (!err || txp.txid != txid) {

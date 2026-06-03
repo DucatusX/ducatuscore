@@ -4,7 +4,7 @@ import * as request from 'request';
 import { Common } from './common';
 import logger from './logger';
 import { Storage } from './storage';
-import Providers from './fiatrateproviders';
+import Providers, { FiatRateProvider } from './fiatrateproviders';
 
 const $ = require('preconditions').singleton();
 const Defaults = Common.Defaults;
@@ -15,12 +15,14 @@ export class FiatRateService {
   defaultProvider: any;
   storage: Storage;
   providers = Object.values(Providers);
+  providersByCoin: Record<string, string>;
 
   init(opts, cb) {
     opts = opts || {};
 
     this.request = opts.request || request;
     this.defaultProvider = opts.defaultProvider || Defaults.FIAT_RATE_PROVIDER;
+    this.providersByCoin = opts.providersByCoin || {};
 
     async.parallel(
       [
@@ -61,7 +63,7 @@ export class FiatRateService {
     cb = cb || function() {};
     const coins = Object.values(Constants.DUCATUSCORE_SUPPORTED_COINS);
 
-    this.providers.forEach(provider => {
+    this.providers.forEach((provider: FiatRateProvider) => {
       if (!provider.parseFn) return cb(new Error('No parse function for provider ' + provider.name));
 
       this._retrieve(provider, (err, res) => {
@@ -79,6 +81,7 @@ export class FiatRateService {
         };
 
         coins.forEach(coin => {
+          if (this.getProviderName(coin) !== provider.name) return;
           const rates = provider.parseFn(res, coin.toUpperCase());
           storeRates(coin, rates);
         });
@@ -114,6 +117,7 @@ export class FiatRateService {
 
     const now = Date.now();
     let coin = opts.coin || 'btc';
+    const provider = opts.provider || this.getProviderName(coin);
     //    const provider = opts.provider || this.defaultProvider;
     const ts = _.isNumber(opts.ts) || _.isArray(opts.ts) ? opts.ts : now;
 
@@ -159,6 +163,7 @@ export class FiatRateService {
       _.values(Constants.DUCATUSCORE_SUPPORTED_COINS),
       (coin, cb) => {
         rates[coin] = [];
+        const provider = opts.provider || this.getProviderName(coin);
         async.map(
           currencies,
           (currency, cb) => {
@@ -199,6 +204,7 @@ export class FiatRateService {
 
     let { coin, code } = opts;
     const ts = opts.ts || Date.now();
+    const provider = opts.provider || this.getProviderName(coin);
 
     if (Constants.DUCATUSCORE_USD_STABLECOINS[coin.toUpperCase()]) {
       return this.getRatesForStablecoin({ code: 'USD', ts }, cb);
@@ -254,6 +260,7 @@ export class FiatRateService {
     async.map(
       coins,
       (coin: string, cb) => {
+        const provider = opts.provider || this.getProviderName(coin);
         this.storage.fetchHistoricalRates(coin, opts.code, ts, (err, rates) => {
           if (err) return cb(err);
           if (!rates) return cb();
@@ -302,5 +309,17 @@ export class FiatRateService {
         }))
       );
     });
+  }
+
+  private getProviderName(coin: string) {
+    const normalizedCoin = this.normalizeCoin(coin);
+    return this.providersByCoin[normalizedCoin] || this.defaultProvider;
+  }
+
+  private normalizeCoin(coin: string) {
+    if (!coin) return coin;
+    if (coin === 'wbtc_e' || coin === 'wbtc_m') return 'btc';
+    if (coin === 'wbtc') return 'btc';
+    return coin.split('_')[0];
   }
 }
