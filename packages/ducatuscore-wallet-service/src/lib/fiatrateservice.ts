@@ -320,6 +320,6 @@ export class FiatRateService {
     if (!coin) return coin;
     if (coin === 'wbtc_e' || coin === 'wbtc_m') return 'btc';
     if (coin === 'wbtc') return 'btc';
-    return coin.split('_')[0];
+    return coin.split('_')[0].toLowerCase();
   }
 }

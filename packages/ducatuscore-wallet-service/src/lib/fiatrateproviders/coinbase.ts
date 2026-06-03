@@ -12,9 +12,12 @@ export default {
     if (!coinRate) return rates;
 
     for (const fiat of Defaults.FIAT_CURRENCIES) {
+      const fiatRate = Number(sourceRates[fiat.code]);
+      if (!fiatRate) continue;
+
       rates.push({
         code: fiat.code,
-        value: 1 / coinRate
+        value: fiatRate / coinRate
       });
     }
 
