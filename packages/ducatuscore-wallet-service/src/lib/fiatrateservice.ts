@@ -4,7 +4,7 @@ import * as request from 'request';
 import { Common } from './common';
 import logger from './logger';
 import { Storage } from './storage';
-import Providers, { FiatRateProvider } from './fiatrateproviders';
+import Providers, { FiatRateProvider, RatesByCoin } from './fiatrateproviders';
 
 const $ = require('preconditions').singleton();
 const Defaults = Common.Defaults;
@@ -61,7 +61,7 @@ export class FiatRateService {
 
   _fetch(cb?) {
     cb = cb || function() {};
-    const coins = Object.values(Constants.DUCATUSCORE_SUPPORTED_COINS);
+    const supportedCoins = new Set(Object.values(Constants.DUCATUSCORE_SUPPORTED_COINS).map(coin => this.normalizeCoin(coin)));
 
     this.providers.forEach((provider: FiatRateProvider) => {
       if (!provider.parseFn) return cb(new Error('No parse function for provider ' + provider.name));
@@ -80,9 +80,33 @@ export class FiatRateService {
           });
         };
 
-        coins.forEach(coin => {
-          if (this.getProviderName(coin) !== provider.name) return;
-          const rates = provider.parseFn(res, coin.toUpperCase());
+        let parsedRatesByCoin: RatesByCoin;
+
+        try {
+          parsedRatesByCoin = provider.parseFn(res);
+        } catch (err) {
+          logger.error('Error parsing rates on %o: %o', provider.name, err);
+          return;
+        }
+
+        if (!parsedRatesByCoin || typeof parsedRatesByCoin !== 'object') {
+          logger.warn('No rates parsed on %o', provider.name);
+          return;
+        }
+
+        Object.entries(parsedRatesByCoin).forEach(([rawCoin, rates]) => {
+          const coin = this.normalizeCoin(rawCoin);
+
+          if (!supportedCoins.has(coin)) return;
+
+          const assignedProvider = this.providersByCoin[coin];
+          if (assignedProvider && assignedProvider !== provider.name) return;
+
+          if (!rates?.length) {
+            logger.warn('No rates parsed for %o on %o', coin, provider.name);
+            return;
+          }
+
           storeRates(coin, rates);
         });
       });

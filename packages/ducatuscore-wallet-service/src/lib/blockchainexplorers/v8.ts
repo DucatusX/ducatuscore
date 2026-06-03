@@ -23,6 +23,10 @@ const config = require('../../config');
 const Constants = Common.Constants,
   Defaults = Common.Defaults,
   Utils = Common.Utils;
+const SOCKET_IO_NODE_TRANSPORT_OPTS = {
+  transports: ['websocket'],
+  forceNode: true
+};
 
 function v8network(dwsNetwork) {
   if (dwsNetwork == 'livenet') return 'mainnet';
@@ -552,9 +556,9 @@ export class V8 {
     const DISPLAYED_ERROR_CHAINS = ['duc', 'ducx', 'bnb'];
     logger.info('V8 connecting socket at:' + this.host);
     // sockets always use the first server on the pull
-    const walletsSocket = io.connect(this.host, { transports: ['websocket'] });
+    const walletsSocket = io.connect(this.host, SOCKET_IO_NODE_TRANSPORT_OPTS);
 
-    const blockSocket = io.connect(this.host, { transports: ['websocket'] });
+    const blockSocket = io.connect(this.host, SOCKET_IO_NODE_TRANSPORT_OPTS);
 
     const getAuthPayload = host => {
       const authKey = config.blockchainExplorerOpts.socketApiKey;

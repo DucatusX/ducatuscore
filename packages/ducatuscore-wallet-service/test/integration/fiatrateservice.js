@@ -11,6 +11,7 @@ log.level = 'info';
 var { Common } = require('../../ts_build/lib/common');
 var Defaults = Common.Defaults;
 var Constants = Common.Constants;
+var ducatus = require('../../ts_build/lib/fiatrateproviders/ducatus').default;
 
 var helpers = require('./helpers');
 
@@ -49,6 +50,64 @@ describe('Fiat rate service', function() {
   });
 
   describe('#getRate', function() {
+    it('should parse ducatus rates for all coins in one pass', function() {
+      const parsedRates = ducatus.parseFn({
+        ducx: {
+          USD: '0.00691384',
+          EUR: '0.0059490286310328'
+        },
+        DUC: {
+          USD: '0.00069138',
+          EUR: '0.0005948994212946'
+        }
+      });
+
+      parsedRates.should.deep.equal({
+        ducx: [
+          { code: 'USD', value: 0.00691384 },
+          { code: 'EUR', value: 0.0059490286310328 }
+        ],
+        duc: [
+          { code: 'USD', value: 0.00069138 },
+          { code: 'EUR', value: 0.0005948994212946 }
+        ]
+      });
+    });
+
+    it('should store parsed coins only for the assigned provider or unmapped coins', function(done) {
+      const customProvider = {
+        name: 'CustomProvider',
+        url: 'http://example.test/rates',
+        parseFn: sinon.stub().returns({
+          btc: [{ code: 'USD', value: 100 }],
+          ducx: [{ code: 'USD', value: 200 }],
+          customcoin: [{ code: 'USD', value: 300 }]
+        })
+      };
+      service.providers = [customProvider];
+      service.providersByCoin = {
+        btc: 'CustomProvider',
+        ducx: 'OtherProvider'
+      };
+
+      request.get.callsFake((opts, cb) => cb(null, { statusCode: 200 }, {}));
+
+      service._fetch(() => {});
+
+      setTimeout(() => {
+        customProvider.parseFn.calledOnce.should.equal(true);
+        service.getRate({ coin: 'btc', code: 'USD' }, function(err, res) {
+          should.not.exist(err);
+          res.rate.should.equal(100);
+          service.getRate({ coin: 'ducx', code: 'USD' }, function(err, skipped) {
+            should.not.exist(err);
+            should.not.exist(skipped.rate);
+            done();
+          });
+        });
+      }, 20);
+    });
+
     it('should get current rate', function(done) {
       service.storage.storeFiatRate(
         'bch',

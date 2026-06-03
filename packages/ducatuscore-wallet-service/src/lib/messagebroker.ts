@@ -2,6 +2,10 @@ import { EventEmitter } from 'events';
 import 'source-map-support/register';
 import logger from './logger';
 
+const SOCKET_IO_NODE_TRANSPORT_OPTS = {
+  forceNode: true
+};
+
 export class MessageBroker extends EventEmitter {
   remote: boolean;
   mq: SocketIO.Socket;
@@ -13,7 +17,7 @@ export class MessageBroker extends EventEmitter {
       const url = opts.messageBrokerServer.url;
 
       this.remote = true;
-      this.mq = require('socket.io-client').connect(url);
+      this.mq = require('socket.io-client').connect(url, SOCKET_IO_NODE_TRANSPORT_OPTS);
       this.mq.on('connect', () => {});
       this.mq.on('connect_error', () => {
         logger.warn('Error connecting to message broker server @ ' + url);

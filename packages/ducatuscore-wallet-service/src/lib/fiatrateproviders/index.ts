@@ -8,10 +8,14 @@ export interface Rate {
   value: number
 }
 
+export interface RatesByCoin {
+  [coin: string]: Rate[];
+}
+
 export interface FiatRateProvider {
   name: string;
   url: string;
-  parseFn: (res: any, coin: string) => Rate[];
+  parseFn: (res: any) => RatesByCoin;
 }
 
 const Providers = {
