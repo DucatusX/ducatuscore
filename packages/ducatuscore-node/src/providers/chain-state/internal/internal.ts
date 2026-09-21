@@ -89,7 +89,9 @@ export class InternalStateProvider implements IChainStateService {
     Storage.apiStreamingFind(CoinStorage, query, { limit, since, paging: '_id' }, req!, res!);
   }
 
-  async getBalanceForAddress(params: GetBalanceForAddressParams) {
+  async getBalanceForAddress(
+    params: GetBalanceForAddressParams
+  ): Promise<{ confirmed: string | number; unconfirmed: string | number; balance: string | number }> {
     const { chain, network, address } = params;
     const query = {
       chain,
@@ -418,7 +420,9 @@ export class InternalStateProvider implements IChainStateService {
     transactionStream.pipe(listTransactionsStream).pipe(res);
   }
 
-  async getWalletBalance(params: GetWalletBalanceParams) {
+  async getWalletBalance(
+    params: GetWalletBalanceParams
+  ): Promise<{ confirmed: string | number; unconfirmed: string | number; balance: string | number }> {
     const query = {
       wallets: params.wallet._id,
       'wallets.0': { $exists: true },

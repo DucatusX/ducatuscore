@@ -1891,13 +1891,14 @@ export class WalletService implements IWalletService {
 
     setWallet(() => {
       if (!wallet.isComplete()) {
+        const zero: any = _.includes(_.values(Constants.EVM_CHAINS), wallet.chain) ? '0' : 0;
         const emptyBalance = {
-          totalAmount: 0,
-          lockedAmount: 0,
-          totalConfirmedAmount: 0,
-          lockedConfirmedAmount: 0,
-          availableAmount: 0,
-          availableConfirmedAmount: 0
+          totalAmount: zero,
+          lockedAmount: zero,
+          totalConfirmedAmount: zero,
+          lockedConfirmedAmount: zero,
+          availableAmount: zero,
+          availableConfirmedAmount: zero
         };
         return cb(null, emptyBalance);
       }

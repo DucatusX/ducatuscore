@@ -1,6 +1,7 @@
 import { Transactions } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { ChainService } from '../chain/index';
+import { sumOutputsWei } from '../chain/weiamount';
 import { Common } from '../common';
 import logger from '../logger';
 import { TxProposalLegacy } from './txproposal_legacy';
@@ -385,9 +386,14 @@ export class TxProposal {
   /**
    * getTotalAmount
    *
-   * @return {Number} total amount of all outputs excluding change output
+   * @return {Number|String} total amount of all outputs excluding change output. EVM chains carry
+   * wei-scale amounts as decimal strings, so those are summed with BN and returned as a string -
+   * a lodash sum would concatenate them, and a JS number cannot hold them.
    */
   getTotalAmount() {
+    if (_.includes(_.values(Constants.EVM_CHAINS), this.chain)) {
+      return sumOutputsWei(this.outputs).toString();
+    }
     return _.sumBy(this.outputs, 'amount');
   }
 

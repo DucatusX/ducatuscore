@@ -39,6 +39,24 @@ import { InternalTxRelatedFilterTransform } from './internalTxTransform';
 import { PopulateReceiptTransform } from './populateReceiptTransform';
 import { EVMListTransactionsStream } from './transform';
 
+export function toWeiBigInt(value: string | number | bigint | null | undefined): bigint {
+  if (value == null || value === '') {
+    return BigInt(0);
+  }
+  if (typeof value === 'bigint') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return BigInt(Math.trunc(value));
+  }
+  return BigInt(value.toString());
+}
+
+/** Normalizes a wei value to an exact decimal string. */
+export function toWeiString(value: string | number | bigint | null | undefined): string {
+  return toWeiBigInt(value).toString();
+}
+
 export class BaseEVMStateProvider extends InternalStateProvider implements IChainStateService {
   config: IChainConfig<IEVMNetworkConfig>;
   static rpcs = {} as { [chain: string]: { [network: string]: { rpc: typeof CryptoRpc; web3: Web3 } } };
@@ -134,16 +152,11 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     const balances = await CacheStorage.getGlobalOrRefresh(
       cacheKey,
       async () => {
-        if (tokenAddress) {
-          const token = await this.erc20For(network, tokenAddress);
-          const balance = await token.methods.balanceOf(address).call();
-          const numberBalance = Number(balance);
-          return { confirmed: numberBalance, unconfirmed: 0, balance: numberBalance };
-        } else {
-          const balance = await web3.eth.getBalance(address);
-          const numberBalance = Number(balance);
-          return { confirmed: numberBalance, unconfirmed: 0, balance: numberBalance };
-        }
+        const balance = tokenAddress
+          ? await (await this.erc20For(network, tokenAddress)).methods.balanceOf(address).call()
+          : await web3.eth.getBalance(address);
+        const strBalance = toWeiString(balance);
+        return { confirmed: strBalance, unconfirmed: '0', balance: strBalance };
       },
       CacheStorage.Times.Minute
     );
@@ -283,16 +296,18 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     let addressBalancePromises = addresses.map(({ address }) =>
       this.getBalanceForAddress({ chain: this.chain, network, address, args: params.args })
     );
-    let addressBalances = await Promise.all<{ confirmed: number; unconfirmed: number; balance: number }>(
-      addressBalancePromises
-    );
+    let addressBalances = await Promise.all<{
+      confirmed: string | number;
+      unconfirmed: string | number;
+      balance: string | number;
+    }>(addressBalancePromises);
     let balance = addressBalances.reduce(
       (prev, cur) => ({
-        unconfirmed: prev.unconfirmed + Number(cur.unconfirmed),
-        confirmed: prev.confirmed + Number(cur.confirmed),
-        balance: prev.balance + Number(cur.balance)
+        unconfirmed: (toWeiBigInt(prev.unconfirmed) + toWeiBigInt(cur.unconfirmed)).toString(),
+        confirmed: (toWeiBigInt(prev.confirmed) + toWeiBigInt(cur.confirmed)).toString(),
+        balance: (toWeiBigInt(prev.balance) + toWeiBigInt(cur.balance)).toString()
       }),
-      { unconfirmed: 0, confirmed: 0, balance: 0 }
+      { unconfirmed: '0', confirmed: '0', balance: '0' }
     );
     return balance;
   }
