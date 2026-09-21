@@ -134,6 +134,7 @@ export class DucxChain implements IChain {
         let gasLimit = 0; // Gas limit for all recepients. used for contract interactions that rollup recepients
         let fee = 0;
         const defaultGasLimit = this.getDefaultGasLimit(opts);
+        const isSendMax = _.isNumber(opts.fee);
         let outputAddresses = []; // Parameter for MuliSend contract
         let outputAmounts = []; // Parameter for MuliSend contract
         let totalValue = toBN(0); // Parameter for MuliSend contract
@@ -162,7 +163,8 @@ export class DucxChain implements IChain {
                 to,
                 value,
                 data: output.data,
-                gasPrice
+                gasPrice,
+                noGasBuffer: isSendMax
               });
               output.gasLimit = inGasLimit || defaultGasLimit;
             } catch (err) {
@@ -171,7 +173,7 @@ export class DucxChain implements IChain {
           } else {
             inGasLimit = output.gasLimit;
           }
-          if (_.isNumber(opts.fee)) {
+          if (isSendMax) {
             // This is used for sendmax
             gasPrice = feePerKb = Number((opts.fee / (inGasLimit || defaultGasLimit)).toFixed());
           }

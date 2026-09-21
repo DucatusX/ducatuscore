@@ -16,10 +16,10 @@ EthRoutes.get('/api/ETH/:network/address/:address/txs/count', async (req, res) =
 });
 
 EthRoutes.post('/api/ETH/:network/gas', async (req, res) => {
-  const { from, to, value, data, gasPrice } = req.body;
+  const { from, to, value, data, gasPrice, noGasBuffer } = req.body;
   const { network } = req.params;
   try {
-    const gasLimit = await ETH.estimateGas({ network, from, to, value, data, gasPrice });
+    const gasLimit = await ETH.estimateGas({ network, from, to, value, data, gasPrice, noGasBuffer });
     res.json(gasLimit);
   } catch (err) {
     // @ts-ignore

@@ -39,6 +39,8 @@ import { InternalTxRelatedFilterTransform } from './internalTxTransform';
 import { PopulateReceiptTransform } from './populateReceiptTransform';
 import { EVMListTransactionsStream } from './transform';
 
+export const CONTRACT_GAS_BUFFER = 1.1;
+
 export function toWeiBigInt(value: string | number | bigint | null | undefined): bigint {
   if (value == null || value === '') {
     return BigInt(0);
@@ -462,7 +464,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
   async estimateGas(params): Promise<number> {
     return new Promise(async (resolve, reject) => {
       try {
-        let { network, value, from, data, /*gasPrice,*/ to } = params;
+        let { network, value, from, data, /*gasPrice,*/ to, noGasBuffer } = params;
         const { web3 } = await this.getWeb3(network);
         const dataDecoded = EVMTransactionStorage.abiDecode(data);
 
@@ -494,39 +496,68 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
           }
         }
 
-        let _value;
-        if (data) {
-          // Gas estimation might fail with `insufficient funds` if value is higher than balance for a normal send.
-          // We want this method to give a blind fee estimation, though, so we should not include the value
-          // unless it's needed for estimating smart contract execution.
-          _value = web3.utils.toHex(value);
+        const sendEstimate = (withValue: boolean) =>
+          new Promise<number>((res, rej) => {
+            const opts = {
+              method: 'eth_estimateGas',
+              params: [
+                {
+                  data,
+                  to: to && to.toLowerCase(),
+                  from: from && from.toLowerCase(),
+                  // gasPrice: web3.utils.toHex(gasPrice), // Setting this lower than the baseFee of the last block will cause an error. Better to just leave it out.
+                  value: withValue && value != null ? web3.utils.toHex(value) : undefined
+                }
+              ],
+              jsonrpc: '2.0',
+              id: 'ducatuscore-' + Date.now()
+            };
+
+            const provider = web3.currentProvider as any;
+            provider.send(opts, (err, response) => {
+              if (err) return rej(err);
+              if (!response.result) return rej(response.error || response);
+              return res(Number(response.result));
+            });
+          });
+
+        const hasValue = value != null;
+        let gasLimit: number;
+        try {
+          gasLimit = await sendEstimate(hasValue);
+        } catch (err) {
+          if (!hasValue || !this.isInsufficientFundsError(err)) {
+            throw err;
+          }
+          gasLimit = await sendEstimate(false);
         }
 
-        const opts = {
-          method: 'eth_estimateGas',
-          params: [
-            {
-              data,
-              to: to && to.toLowerCase(),
-              from: from && from.toLowerCase(),
-              // gasPrice: web3.utils.toHex(gasPrice), // Setting this lower than the baseFee of the last block will cause an error. Better to just leave it out.
-              value: _value
-            }
-          ],
-          jsonrpc: '2.0',
-          id: 'ducatuscore-' + Date.now()
-        };
-
-        let provider = web3.currentProvider as any;
-        provider.send(opts, (err, data) => {
-          if (err) return reject(err);
-          if (!data.result) return reject(data.error || data);
-          return resolve(Number(data.result));
-        });
+        return resolve(await this.addContractGasBuffer({ web3, to, gasLimit, noGasBuffer }));
       } catch (err) {
         return reject(err);
       }
     });
+  }
+
+  isInsufficientFundsError(err): boolean {
+    const message = typeof err === 'string' ? err : err?.message || err?.error?.message || '';
+    return /insufficient funds/i.test(message);
+  }
+
+  async addContractGasBuffer({ web3, to, gasLimit, noGasBuffer }): Promise<number> {
+    if (noGasBuffer || !to || !gasLimit) {
+      return gasLimit;
+    }
+    try {
+      const code = await web3.eth.getCode(to);
+      if (!code || code === '0x' || code === '0x0') {
+        return gasLimit;
+      }
+    } catch (err) {
+      logger.warn('Could not check for contract code at %o: %o', to, err);
+      return gasLimit;
+    }
+    return Math.ceil(gasLimit * CONTRACT_GAS_BUFFER);
   }
 
   async getBlocks(params: GetBlockParams) {
