@@ -1,5 +1,5 @@
 import { IValidation } from '..';
-const DucatuscoreLibDuc = require('@ducatus/ducatuscore-lib-duc');
+const DucatuscoreLibDuc = require('@ducatuscore/lib-duc');
 
 export class DucValidation implements IValidation {
   validateAddress(network: string, address: string): boolean {

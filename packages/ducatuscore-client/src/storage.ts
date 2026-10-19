@@ -6,7 +6,7 @@ import { Mongo } from './storage/mongo';
 import { TextFile } from './storage/textFile';
 import { KeyImport } from './wallet';
 
-const ducatuscoreLib = require('@ducatus/ducatuscore-crypto').DucatuscoreLib;
+const ducatuscoreLib = require('@ducatuscore/crypto').DucatuscoreLib;
 
 export class Storage {
   path: string;

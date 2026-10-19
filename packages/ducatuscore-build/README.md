@@ -14,7 +14,7 @@ And use and require in your gulp file:
 
 ```javascript
 var gulp = require('gulp');
-var ducatuscoreTasks = require('@ducatus/ducatuscore-build');
+var ducatuscoreTasks = require('@ducatuscore/build');
 
 ducatuscoreTasks('submodule');
 gulp.task('default', ['lint', 'test', 'browser', 'coverage']);
@@ -27,5 +27,5 @@ gulp.task('default', ['lint', 'test', 'browser', 'coverage']);
 
 ```javascript
 var ducatuscoreTasks = require('ducatuscore-build');
-ducatuscoreTasks('submodule', {skipBrowsers: true});
+ducatuscoreTasks('submodule', { skipBrowsers: true });
 ```

@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib-cash');
+var ducatuscore = require('@ducatuscore/lib-cash');
 var BufferWriter = ducatuscore.encoding.BufferWriter;
 var BufferReader = ducatuscore.encoding.BufferReader;
 var BN = ducatuscore.crypto.BN;
@@ -64,7 +64,7 @@ VersionMessage.prototype.setPayload = function(payload) {
   this.subversion = parser.readVarLengthBuffer().toString();
   this.startHeight = parser.readUInt32LE();
 
-  if(parser.finished()) {
+  if (parser.finished()) {
     this.relay = true;
   } else {
     this.relay = !!parser.readUInt8();

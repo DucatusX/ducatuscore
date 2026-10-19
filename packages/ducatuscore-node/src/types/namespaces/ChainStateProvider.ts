@@ -149,7 +149,7 @@ export type IChainStateProvider = Provider<IChainStateService> & IChainStateServ
 export interface IChainStateService {
   getBalanceForAddress(
     params: GetBalanceForAddressParams
-  ): Promise<{ confirmed: number; unconfirmed: number; balance: number }>;
+  ): Promise<{ confirmed: string | number; unconfirmed: string | number; balance: string | number }>;
   getBlock(params: GetBlockParams): Promise<IBlock>;
   getBlockBeforeTime(params: GetBlockBeforeTimeParams): Promise<IBlock | null>;
   streamBlocks(params: StreamBlocksParams): any;
@@ -160,7 +160,7 @@ export interface IChainStateService {
   updateWallet(params: UpdateWalletParams): Promise<void>;
   getWalletBalance(
     params: GetWalletBalanceParams
-  ): Promise<{ confirmed: number; unconfirmed: number; balance: number }>;
+  ): Promise<{ confirmed: string | number; unconfirmed: string | number; balance: string | number }>;
   getWalletBalanceAtTime(
     params: GetWalletBalanceAtTimeParams
   ): Promise<{ confirmed: number; unconfirmed: number; balance: number }>;

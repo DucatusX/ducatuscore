@@ -15,6 +15,7 @@ const compression = require('compression');
 const config = require('../config');
 const RateLimit = require('express-rate-limit');
 const Defaults = Common.Defaults;
+const DEBUG_TXHISTORY = process.env.DEBUG_TXHISTORY === 'true';
 
 export class ExpressApp {
   app: express.Express;
@@ -1128,6 +1129,39 @@ export class ExpressApp {
 
         server.getTxHistory(opts, (err, txs) => {
           if (err) return returnError(err, res, req);
+          if (DEBUG_TXHISTORY) {
+            server.getMainAddresses({ limit: 1 }, (addressErr, mainAddresses) => {
+              if (addressErr) {
+                logger.warn(
+                  `[DEBUG_TXHISTORY] walletId=${server.walletId} failed to resolve wallet address: ${addressErr.message || addressErr}`
+                );
+              }
+
+              const walletAddress =
+                mainAddresses && mainAddresses.length ? mainAddresses[0].address : 'unknown';
+              const txList = Array.isArray(txs) ? txs : [];
+              const txSummary = txList.map((tx: any, index: number) => ({
+                index: index + 1,
+                txid: tx?.txid,
+                action: tx?.action,
+                amount: tx?.amount,
+                confirmations: tx?.confirmations,
+                addressTo: tx?.addressTo
+              }));
+
+              logger.info(
+                `[DEBUG_TXHISTORY] walletId=${server.walletId} walletAddress=${walletAddress} txCount=${txList.length}\nsummary=${JSON.stringify(
+                  txSummary,
+                  null,
+                  2
+                )}\nresponse=${JSON.stringify(txs, null, 2)}`
+              );
+              res.json(txs);
+              res.end();
+            });
+            return;
+          }
+
           res.json(txs);
           res.end();
         });

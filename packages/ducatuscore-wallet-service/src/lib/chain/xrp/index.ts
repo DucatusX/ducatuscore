@@ -1,4 +1,4 @@
-import { Transactions, Validation, Web3 } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation, Web3 } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { IAddress } from 'src/lib/model/address';
 import { IChain, INotificationData } from '..';

@@ -16,10 +16,10 @@ BnbRoutes.get('/api/BNB/:network/address/:address/txs/count', async (req, res) =
 });
 
 BnbRoutes.post('/api/BNB/:network/gas', async (req, res) => {
-  const { from, to, value, data, gasPrice } = req.body;
+  const { from, to, value, data, gasPrice, noGasBuffer } = req.body;
   const { network } = req.params;
   try {
-    const gasLimit = await BNB.estimateGas({ network, from, to, value, data, gasPrice });
+    const gasLimit = await BNB.estimateGas({ network, from, to, value, data, gasPrice, noGasBuffer });
     res.json(gasLimit);
   } catch (err) {
     // @ts-ignore

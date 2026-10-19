@@ -1,7 +1,7 @@
 import { BTCTxProvider } from '../btc';
 
 export class DUCTxProvider extends BTCTxProvider {
-  lib = require('@ducatus/ducatuscore-lib-duc');
+  lib = require('@ducatuscore/lib-duc');
 
   create({ recipients, utxos = [], change, wallet, feeRate, fee = 20000 }) {
     change = change || wallet.deriveAddress(wallet.addressIndex, true);

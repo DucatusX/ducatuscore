@@ -2,7 +2,7 @@
 var _ = require('lodash');
 var async = require('async');
 
-const CWC = require('@ducatus/ducatuscore-crypto');
+const CWC = require('@ducatuscore/crypto');
 var chai = require('chai');
 var sinon = require('sinon');
 var should = chai.should();

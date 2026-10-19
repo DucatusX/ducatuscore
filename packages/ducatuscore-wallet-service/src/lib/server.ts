@@ -4,7 +4,7 @@ import moment from 'moment';
 import 'source-map-support/register';
 import logger from './logger';
 
-import { Validation } from '@ducatus/ducatuscore-crypto';
+import { Validation } from '@ducatuscore/crypto';
 import { BlockChainExplorer } from './blockchainexplorer';
 import { V8 } from './blockchainexplorers/v8';
 import { ChainService } from './chain/index';
@@ -40,15 +40,15 @@ const serverMessages = require('../serverMessages');
 const BCHAddressTranslator = require('./bchaddresstranslator');
 const EmailValidator = require('email-validator');
 
-const Ducatuscore = require('@ducatus/ducatuscore-lib');
+const Ducatuscore = require('@ducatuscore/lib');
 const Ducatuscore_ = {
   btc: Ducatuscore,
-  bch: require('@ducatus/ducatuscore-lib-cash'),
+  bch: require('@ducatuscore/lib-cash'),
   eth: Ducatuscore,
   xrp: Ducatuscore,
   ducx: Ducatuscore,
   bnb: Ducatuscore,
-  duc: require('@ducatus/ducatuscore-lib-duc')
+  duc: require('@ducatuscore/lib-duc')
 };
 
 const Utils = Common.Utils;
@@ -61,6 +61,7 @@ const Errors = require('./errors/errordefinitions');
 let request = require('request');
 let initialized = false;
 let doNotCheckV8 = false;
+const DEBUG_TXSEND = process.env.DEBUG_TXSEND === 'true';
 
 let lock;
 let storage;
@@ -1233,7 +1234,7 @@ export class WalletService implements IWalletService {
       }
 
       if (wallet.coin != 'ducx') {
-        opts.ducxMokenAddresses = null;
+        opts.ducxTokenAddresses = null;
         opts.multisigDucxInfo = null;
       }
 
@@ -1890,13 +1891,14 @@ export class WalletService implements IWalletService {
 
     setWallet(() => {
       if (!wallet.isComplete()) {
+        const zero: any = _.includes(_.values(Constants.EVM_CHAINS), wallet.chain) ? '0' : 0;
         const emptyBalance = {
-          totalAmount: 0,
-          lockedAmount: 0,
-          totalConfirmedAmount: 0,
-          lockedConfirmedAmount: 0,
-          availableAmount: 0,
-          availableConfirmedAmount: 0
+          totalAmount: zero,
+          lockedAmount: zero,
+          totalConfirmedAmount: zero,
+          lockedConfirmedAmount: zero,
+          availableAmount: zero,
+          availableConfirmedAmount: zero
         };
         return cb(null, emptyBalance);
       }
@@ -2064,6 +2066,24 @@ export class WalletService implements IWalletService {
           }
           return result;
         });
+
+        if (opts.chain === 'ducx') {
+          const normal = values.find(level => level.level === 'normal');
+          const normalDefault = feeLevels.find(level => level.name === 'normal');
+
+          if (normal && normalDefault && _.isNumber(normal.feePerKb) && _.isNumber(normalDefault.defaultValue) && normalDefault.defaultValue > 0) {
+            const derivedLevels = ['urgent', 'priority', 'economy', 'superEconomy'];
+            for (const levelName of derivedLevels) {
+              const valueLevel = values.find(level => level.level === levelName);
+              const defaultLevel = feeLevels.find(level => level.name === levelName);
+              if (!valueLevel || !defaultLevel || !_.isNumber(defaultLevel.defaultValue)) {
+                continue;
+              }
+              const ratio = defaultLevel.defaultValue / normalDefault.defaultValue;
+              valueLevel.feePerKb = +(normal.feePerKb * ratio).toFixed(0);
+            }
+          }
+        }
 
         // Ensure monotonically decreasing values
         for (let i = 1; i < values.length; i++) {
@@ -2789,10 +2809,62 @@ export class WalletService implements IWalletService {
   _broadcastRawTx(chain, network, raw, cb) {
     const bc = this._getBlockchainExplorer(chain, network);
     if (!bc) return cb(new Error('Could not get blockchain explorer instance'));
+
+    if (DEBUG_TXSEND) {
+      logger.info(
+        `[DEBUG_TXSEND] broadcast request walletId=${this.walletId} chain=${chain} network=${network} rawTx=${raw}`
+      );
+    }
+
     bc.broadcast(raw, (err, txid) => {
-      if (err) return cb(err);
+      if (err) {
+        if (DEBUG_TXSEND) {
+          logger.warn(
+            `[DEBUG_TXSEND] broadcast error walletId=${this.walletId} chain=${chain} network=${network} error=${
+              err?.message || err
+            }`
+          );
+        }
+        return cb(err);
+      }
+
+      if (DEBUG_TXSEND) {
+        logger.info(
+          `[DEBUG_TXSEND] broadcast success walletId=${this.walletId} chain=${chain} network=${network} txid=${txid}`
+        );
+      }
+
       return cb(null, txid);
     });
+  }
+
+  _getDebugTxSendDetails(txp) {
+    return {
+      txProposalId: txp.id,
+      txid: txp.txid,
+      walletId: txp.walletId,
+      chain: txp.chain,
+      network: txp.network,
+      from: txp.from,
+      amount: txp.amount,
+      fee: txp.fee,
+      nonce: txp.nonce,
+      gasPrice: txp.gasPrice,
+      gasLimit: txp.gasLimit,
+      data: txp.data,
+      tokenAddress: txp.tokenAddress,
+      multisigContractAddress: txp.multisigContractAddress,
+      multiSendContractAddress: txp.multiSendContractAddress,
+      destinationTag: txp.destinationTag,
+      invoiceID: txp.invoiceID,
+      outputs: (txp.outputs || []).map(output => ({
+        to: output.toAddress || output.address,
+        amount: output.amount,
+        data: output.data,
+        gasLimit: output.gasLimit,
+        script: output.script
+      }))
+    };
   }
 
   /**
@@ -2997,6 +3069,11 @@ export class WalletService implements IWalletService {
             } catch (ex) {
               return cb(ex);
             }
+
+            if (DEBUG_TXSEND) {
+              logger.info(`[DEBUG_TXSEND] tx details ${JSON.stringify(this._getDebugTxSendDetails(txp), null, 2)}`);
+            }
+
             this._broadcastRawTx(wallet.chain, wallet.network, raw, (err, txid) => {
               if (err || txid != txp.txid) {
                 if (!err || txp.txid != txid) {

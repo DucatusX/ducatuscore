@@ -5,7 +5,7 @@ import * as stream from 'stream';
 import { URL } from 'url';
 let usingBrowser = (global as any).window;
 const URLClass = usingBrowser ? usingBrowser.URL : URL;
-const ducatuscoreLib = require('@ducatus/ducatuscore-crypto').DucatuscoreLib;
+const ducatuscoreLib = require('@ducatuscore/crypto').DucatuscoreLib;
 
 export class Client {
   apiUrl: string;

@@ -1,23 +1,34 @@
-import { Rate } from '.';
+import { Rate, RatesByCoin } from '.';
+import { Constants } from '../common/constants';
 import { Defaults } from '../common/defaults';
 
 export default {
   name: 'BitPay',
   url: 'https://bitpay.com/api/rates/',
-  parseFn(res, coin) {
-    const rates: Rate[] = [];
+  parseFn(res) {
+    const ratesByCoin: RatesByCoin = {};
+    const supportedCoins = Object.values(Constants.DUCATUSCORE_SUPPORTED_COINS);
 
-    const COIN_RATE = res.find(rate => rate.code === coin)?.rate
+    for (const coin of supportedCoins) {
+      const coinRate = res.find(rate => rate.code === coin.toUpperCase())?.rate;
+      if (!coinRate) continue;
 
-    for (const fiat of Defaults.FIAT_CURRENCIES) {
-      const FIAT_RATE = res.find(rate => rate.code === fiat.code)?.rate
-      if (!FIAT_RATE || !COIN_RATE) continue
-      rates.push({
-        code: fiat.code,
-        value: Number(FIAT_RATE/COIN_RATE)
-      });
+      const rates: Rate[] = [];
+      for (const fiat of Defaults.FIAT_CURRENCIES) {
+        const fiatRate = res.find(rate => rate.code === fiat.code)?.rate;
+        if (!fiatRate) continue;
+
+        rates.push({
+          code: fiat.code,
+          value: Number(fiatRate / coinRate)
+        });
+      }
+
+      if (rates.length) {
+        ratesByCoin[coin] = rates;
+      }
     }
 
-    return rates;
+    return ratesByCoin;
   }
 };

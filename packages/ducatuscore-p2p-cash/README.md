@@ -9,15 +9,15 @@ See the main ducatuscore repo
 ## Getting Started
 
 ```sh
-npm install @ducatus/ducatuscore-p2p-cash
+npm install @ducatuscore/p2p-cash
 ```
 
 In order to connect to the Bitcoin Cash network, you'll need to know the IP address of at least one node of the network, or use [Pool](./docs/pool.md) to discover peers using a DNS seed.
 
 ```javascript
-var Peer = require('@ducatus/ducatuscore-p2p-cash').Peer;
+var Peer = require('@ducatuscore/p2p-cash').Peer;
 
-var peer = new Peer({host: '127.0.0.1'});
+var peer = new Peer({ host: '127.0.0.1' });
 
 peer.on('ready', function() {
   // peer info

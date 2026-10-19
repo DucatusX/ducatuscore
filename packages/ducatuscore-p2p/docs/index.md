@@ -9,14 +9,14 @@ Peer-to-peer is implemented as a separate module.
 For node projects:
 
 ```sh
-npm install @ducatus/ducatuscore-p2p --save
+npm install @ducatuscore/p2p --save
 ```
 
 ## Quick Start
 
 ```javascript
-var Peer = require('@ducatus/ducatuscore-p2p').Peer;
-var peer = new Peer({host: '5.9.85.34'});
+var Peer = require('@ducatuscore/p2p').Peer;
+var peer = new Peer({ host: '5.9.85.34' });
 
 // handle events
 peer.on('inv', function(message) {

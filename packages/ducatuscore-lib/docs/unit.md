@@ -7,7 +7,7 @@ To understand the need of using the `Unit` class when dealing with unit conversi
 ```javascript
 > 81.99 * 100000 // wrong
 8198999.999999999
-> var ducatuscore = require('@ducatus/ducatuscore-lib');
+> var ducatuscore = require('@ducatuscore/lib');
 > var Unit = ducatuscore.Unit;
 > Unit.fromMilis(81.99).toSatoshis() // correct
 8199000

@@ -1,4 +1,4 @@
-import { CryptoRpc } from '@ducatus/crypto-rpc';
+import { CryptoRpc } from '@ducatuscore/crypto-rpc';
 import { ObjectID } from 'mongodb';
 import { Readable } from 'stream';
 import Web3 from 'web3';
@@ -29,7 +29,6 @@ import {
   UpdateWalletParams
 } from '../../../../types/namespaces/ChainStateProvider';
 import { partition } from '../../../../utils/partition';
-import { StatsUtil } from '../../../../utils/stats';
 import { ERC20Abi } from '../abi/erc20';
 import { MultisendAbi } from '../abi/multisend';
 import { EVMBlockStorage } from '../models/block';
@@ -39,6 +38,26 @@ import { Erc20RelatedFilterTransform } from './erc20Transform';
 import { InternalTxRelatedFilterTransform } from './internalTxTransform';
 import { PopulateReceiptTransform } from './populateReceiptTransform';
 import { EVMListTransactionsStream } from './transform';
+
+export const CONTRACT_GAS_BUFFER = 1.1;
+
+export function toWeiBigInt(value: string | number | bigint | null | undefined): bigint {
+  if (value == null || value === '') {
+    return BigInt(0);
+  }
+  if (typeof value === 'bigint') {
+    return value;
+  }
+  if (typeof value === 'number') {
+    return BigInt(Math.trunc(value));
+  }
+  return BigInt(value.toString());
+}
+
+/** Normalizes a wei value to an exact decimal string. */
+export function toWeiString(value: string | number | bigint | null | undefined): string {
+  return toWeiBigInt(value).toString();
+}
 
 export class BaseEVMStateProvider extends InternalStateProvider implements IChainStateService {
   config: IChainConfig<IEVMNetworkConfig>;
@@ -115,24 +134,9 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     return CacheStorage.getGlobalOrRefresh(
       cacheKey,
       async () => {
-        const txs = await EVMTransactionStorage.collection
-          .find({ chain, network, blockHeight: { $gt: 0 } })
-          .project({ gasPrice: 1, blockHeight: 1 })
-          .sort({ blockHeight: -1 })
-          .limit(20 * 200)
-          .toArray();
-
-        const blockGasPrices = txs
-          .map(tx => Number(tx.gasPrice))
-          .filter(gasPrice => gasPrice)
-          .sort((a, b) => b - a);
-
-        const whichQuartile = Math.min(target, 4) || 1;
-        const quartileMedian = StatsUtil.getNthQuartileMedian(blockGasPrices, whichQuartile);
-
-        const roundedGwei = (quartileMedian / 1e9).toFixed(2);
-        const gwei = Number(roundedGwei) || 0;
-        const feerate = gwei * 1e9;
+        const { web3 } = await this.getWeb3(network);
+        const gasPrice = Number(await web3.eth.getGasPrice());
+        const feerate = gasPrice || 0;
         return { feerate, blocks: target };
       },
       CacheStorage.Times.Minute
@@ -150,16 +154,11 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     const balances = await CacheStorage.getGlobalOrRefresh(
       cacheKey,
       async () => {
-        if (tokenAddress) {
-          const token = await this.erc20For(network, tokenAddress);
-          const balance = await token.methods.balanceOf(address).call();
-          const numberBalance = Number(balance);
-          return { confirmed: numberBalance, unconfirmed: 0, balance: numberBalance };
-        } else {
-          const balance = await web3.eth.getBalance(address);
-          const numberBalance = Number(balance);
-          return { confirmed: numberBalance, unconfirmed: 0, balance: numberBalance };
-        }
+        const balance = tokenAddress
+          ? await (await this.erc20For(network, tokenAddress)).methods.balanceOf(address).call()
+          : await web3.eth.getBalance(address);
+        const strBalance = toWeiString(balance);
+        return { confirmed: strBalance, unconfirmed: '0', balance: strBalance };
       },
       CacheStorage.Times.Minute
     );
@@ -299,16 +298,18 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
     let addressBalancePromises = addresses.map(({ address }) =>
       this.getBalanceForAddress({ chain: this.chain, network, address, args: params.args })
     );
-    let addressBalances = await Promise.all<{ confirmed: number; unconfirmed: number; balance: number }>(
-      addressBalancePromises
-    );
+    let addressBalances = await Promise.all<{
+      confirmed: string | number;
+      unconfirmed: string | number;
+      balance: string | number;
+    }>(addressBalancePromises);
     let balance = addressBalances.reduce(
       (prev, cur) => ({
-        unconfirmed: prev.unconfirmed + Number(cur.unconfirmed),
-        confirmed: prev.confirmed + Number(cur.confirmed),
-        balance: prev.balance + Number(cur.balance)
+        unconfirmed: (toWeiBigInt(prev.unconfirmed) + toWeiBigInt(cur.unconfirmed)).toString(),
+        confirmed: (toWeiBigInt(prev.confirmed) + toWeiBigInt(cur.confirmed)).toString(),
+        balance: (toWeiBigInt(prev.balance) + toWeiBigInt(cur.balance)).toString()
       }),
-      { unconfirmed: 0, confirmed: 0, balance: 0 }
+      { unconfirmed: '0', confirmed: '0', balance: '0' }
     );
     return balance;
   }
@@ -463,7 +464,7 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
   async estimateGas(params): Promise<number> {
     return new Promise(async (resolve, reject) => {
       try {
-        let { network, value, from, data, /*gasPrice,*/ to } = params;
+        let { network, value, from, data, /*gasPrice,*/ to, noGasBuffer } = params;
         const { web3 } = await this.getWeb3(network);
         const dataDecoded = EVMTransactionStorage.abiDecode(data);
 
@@ -495,39 +496,68 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
           }
         }
 
-        let _value;
-        if (data) {
-          // Gas estimation might fail with `insufficient funds` if value is higher than balance for a normal send.
-          // We want this method to give a blind fee estimation, though, so we should not include the value
-          // unless it's needed for estimating smart contract execution.
-          _value = web3.utils.toHex(value);
+        const sendEstimate = (withValue: boolean) =>
+          new Promise<number>((res, rej) => {
+            const opts = {
+              method: 'eth_estimateGas',
+              params: [
+                {
+                  data,
+                  to: to && to.toLowerCase(),
+                  from: from && from.toLowerCase(),
+                  // gasPrice: web3.utils.toHex(gasPrice), // Setting this lower than the baseFee of the last block will cause an error. Better to just leave it out.
+                  value: withValue && value != null ? web3.utils.toHex(value) : undefined
+                }
+              ],
+              jsonrpc: '2.0',
+              id: 'ducatuscore-' + Date.now()
+            };
+
+            const provider = web3.currentProvider as any;
+            provider.send(opts, (err, response) => {
+              if (err) return rej(err);
+              if (!response.result) return rej(response.error || response);
+              return res(Number(response.result));
+            });
+          });
+
+        const hasValue = value != null;
+        let gasLimit: number;
+        try {
+          gasLimit = await sendEstimate(hasValue);
+        } catch (err) {
+          if (!hasValue || !this.isInsufficientFundsError(err)) {
+            throw err;
+          }
+          gasLimit = await sendEstimate(false);
         }
 
-        const opts = {
-          method: 'eth_estimateGas',
-          params: [
-            {
-              data,
-              to: to && to.toLowerCase(),
-              from: from && from.toLowerCase(),
-              // gasPrice: web3.utils.toHex(gasPrice), // Setting this lower than the baseFee of the last block will cause an error. Better to just leave it out.
-              value: _value
-            }
-          ],
-          jsonrpc: '2.0',
-          id: 'ducatuscore-' + Date.now()
-        };
-
-        let provider = web3.currentProvider as any;
-        provider.send(opts, (err, data) => {
-          if (err) return reject(err);
-          if (!data.result) return reject(data.error || data);
-          return resolve(Number(data.result));
-        });
+        return resolve(await this.addContractGasBuffer({ web3, to, gasLimit, noGasBuffer }));
       } catch (err) {
         return reject(err);
       }
     });
+  }
+
+  isInsufficientFundsError(err): boolean {
+    const message = typeof err === 'string' ? err : err?.message || err?.error?.message || '';
+    return /insufficient funds/i.test(message);
+  }
+
+  async addContractGasBuffer({ web3, to, gasLimit, noGasBuffer }): Promise<number> {
+    if (noGasBuffer || !to || !gasLimit) {
+      return gasLimit;
+    }
+    try {
+      const code = await web3.eth.getCode(to);
+      if (!code || code === '0x' || code === '0x0') {
+        return gasLimit;
+      }
+    } catch (err) {
+      logger.warn('Could not check for contract code at %o: %o', to, err);
+      return gasLimit;
+    }
+    return Math.ceil(gasLimit * CONTRACT_GAS_BUFFER);
   }
 
   async getBlocks(params: GetBlockParams) {
@@ -564,8 +594,14 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
 
       try {
         await WalletAddressStorage.collection.bulkWrite(walletAddressInserts);
-      } catch (err: any) {
-        if (err.code !== 11000) {
+      } catch (err) {
+        const isDuplicateKeyError =
+          typeof err === 'object' &&
+          err !== null &&
+          'code' in err &&
+          (err as { code?: number }).code === 11000;
+
+        if (!isDuplicateKeyError) {
           throw err;
         }
       }

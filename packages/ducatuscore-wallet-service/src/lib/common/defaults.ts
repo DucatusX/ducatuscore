@@ -174,13 +174,13 @@ export const Defaults = {
         nbBlocks: 4,
         defaultValue: 1000000000
       }
-    ],
+    ]
   },
 
   // How many levels to fallback to if the value returned by the network for a given nbBlocks is -1
   FEE_LEVELS_FALLBACK: 2,
 
-  FIAT_RATE_PROVIDER: 'BitPay',
+  FIAT_RATE_PROVIDER: 'Coinbase',
   FIAT_RATE_FETCH_INTERVAL: 10, // In minutes
   FIAT_RATE_MAX_LOOK_BACK_TIME: 120, // In minutes
 
@@ -290,7 +290,7 @@ export const Defaults = {
     duc: 10000 * 1000, // 10k sat/b
     ducx: 50000000000000,
     xrp: 1000000000000,
-    bnb: 1000000000000, // 50 Gwei,
+    bnb: 1000000000000 // 50 Gwei,
   },
 
   MIN_TX_FEE: {
@@ -300,7 +300,7 @@ export const Defaults = {
     duc: 0,
     ducx: 0,
     xrp: 0,
-    bnb: 0,
+    bnb: 0
   },
 
   MAX_TX_FEE: {
@@ -310,7 +310,7 @@ export const Defaults = {
     duc: 0.05 * 1e8,
     ducx: 1 * 1e18, // 1 ducx
     xrp: 1 * 1e6, // 1 xrp
-    bnb: 1 * 1e18, // 1 eth
+    bnb: 1 * 1e18 // 1 eth
   },
 
   // ETH
@@ -329,25 +329,25 @@ export const Defaults = {
   // XRP has a non-refundable mininum activation fee / balance
   MIN_XRP_BALANCE: 1000000,
 
-   // Time to get the latest push notification subscriptions. In ms.
-   PUSH_NOTIFICATION_SUBS_TIME: 10 * 60 * 1000, // 10 min.
+  // Time to get the latest push notification subscriptions. In ms.
+  PUSH_NOTIFICATION_SUBS_TIME: 10 * 60 * 1000, // 10 min.
 
-   PUSH_NOTIFICATION_LIMIT: 10,
+  PUSH_NOTIFICATION_LIMIT: 10,
 
-   FIAT_CURRENCIES: [
-     { code: 'USD', name: 'US Dollar' },
-     { code: 'INR', name: 'Indian Rupee' },
-     { code: 'GBP', name: 'Pound Sterling' },
-     { code: 'EUR', name: 'Eurozone Euro' },
-     { code: 'CAD', name: 'Canadian Dollar' },
-     { code: 'COP', name: 'Colombian Peso' },
-     { code: 'NGN', name: 'Nigerian Naira' },
-     { code: 'BRL', name: 'Brazilian Real' },
-     { code: 'ARS', name: 'Argentine Peso' },
-     { code: 'AUD', name: 'Australian Dollar' },
-     { code: 'JPY', name: 'Japanese Yen' },
-     { code: 'NZD', name: 'New Zealand Dollar' }
-   ],
+  FIAT_CURRENCIES: [
+    { code: 'USD', name: 'US Dollar' },
+    { code: 'INR', name: 'Indian Rupee' },
+    { code: 'GBP', name: 'Pound Sterling' },
+    { code: 'EUR', name: 'Eurozone Euro' },
+    { code: 'CAD', name: 'Canadian Dollar' },
+    { code: 'COP', name: 'Colombian Peso' },
+    { code: 'NGN', name: 'Nigerian Naira' },
+    { code: 'BRL', name: 'Brazilian Real' },
+    { code: 'ARS', name: 'Argentine Peso' },
+    { code: 'AUD', name: 'Australian Dollar' },
+    { code: 'JPY', name: 'Japanese Yen' },
+    { code: 'NZD', name: 'New Zealand Dollar' }
+  ],
 
   NEW_BLOCK_THROTTLE_TIME_MIN: 5,
 

@@ -1,5 +1,5 @@
 import { IDeriver } from '..';
-const DucatuscoreLib = require('@ducatus/ducatuscore-lib');
+const DucatuscoreLib = require('@ducatuscore/lib');
 
 export abstract class AbstractDucatuscoreLibDeriver implements IDeriver {
   public abstract ducatuscoreLib;

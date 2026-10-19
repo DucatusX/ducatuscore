@@ -1,4 +1,4 @@
-import { DucatuscoreLib } from '@ducatus/ducatuscore-crypto';
+import { DucatuscoreLib } from '@ducatuscore/crypto';
 import * as async from 'async';
 import _ from 'lodash';
 import { IChain, INotificationData } from '..';
@@ -202,7 +202,7 @@ export class BtcChain implements IChain {
 
   checkDust(output) {
     const dustThreshold = Math.max(Defaults.MIN_OUTPUT_AMOUNT, this.ducatuscoreLib.Transaction.DUST_AMOUNT);
-    const numAmount = Number(output.amount) // to deal with amount as string
+    const numAmount = Number(output.amount); // to deal with amount as string
 
     if (numAmount < dustThreshold) {
       return Errors.DUST_AMOUNT;
@@ -876,7 +876,7 @@ export class BtcChain implements IChain {
   }
 
   checkValidTxAmount(output): boolean {
-    return /^[1-9][0-9]*$/.test(String(output.amount))
+    return /^[1-9][0-9]*$/.test(String(output.amount));
   }
 
   supportsMultisig() {
@@ -914,7 +914,8 @@ export class BtcChain implements IChain {
         const s = {
           inputIndex: i,
           signature,
-          sigtype: this.ducatuscoreLib.crypto.Signature.SIGHASH_ALL | this.ducatuscoreLib.crypto.Signature.SIGHASH_FORKID,
+          sigtype:
+            this.ducatuscoreLib.crypto.Signature.SIGHASH_ALL | this.ducatuscoreLib.crypto.Signature.SIGHASH_FORKID,
           publicKey: pub
         };
         tx.inputs[i].addSignature(tx, s, signingMethod);

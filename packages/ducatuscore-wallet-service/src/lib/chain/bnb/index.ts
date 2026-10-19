@@ -1,4 +1,4 @@
-import { Transactions, Validation } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { ClientError } from '../../errors/clienterror';
 import { EthChain } from '../eth';

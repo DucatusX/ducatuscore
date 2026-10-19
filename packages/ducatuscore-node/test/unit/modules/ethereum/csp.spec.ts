@@ -180,7 +180,8 @@ describe('ETH Chain State Provider', function() {
         toHex: (val) => val && Buffer.from(val.toString()).toString('hex')
       },
       eth: {
-        getBlockNumber: sandbox.stub().resolves(1)
+        getBlockNumber: sandbox.stub().resolves(1),
+        getCode: sandbox.stub().resolves('0x')
       },
       currentProvider: {
         send: sandbox.stub()

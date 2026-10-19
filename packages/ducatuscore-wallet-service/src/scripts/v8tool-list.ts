@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 const request = require('request');
-const Ducatuscore = require('@ducatus/ducatuscore-lib');
+const Ducatuscore = require('@ducatuscore/lib');
 const requestStream = require('request');
 import { Client } from '../lib//blockchainexplorers/v8/client';
 

@@ -1094,6 +1094,13 @@ export class Storage {
    * This represent a ongoing query stream from a Wallet client
    */
   storeTxHistoryStreamV8(walletId, streamKey, items, cb) {
+    const sanitizedItems = _.map(items, item => {
+      if (item && (item.amount == null || !Number.isFinite(Number(item.amount)))) {
+        item.amount = 0;
+      }
+      return item;
+    });
+
     // only 1 per wallet is allowed
     this.db.collection(collections.CACHE).replaceOne(
       {
@@ -1106,7 +1113,7 @@ export class Storage {
         type: 'historyStream',
         key: null,
         streamKey,
-        items
+        items: sanitizedItems
       },
       {
         w: 1,
@@ -1165,9 +1172,14 @@ export class Storage {
     });
     async.each(
       items,
-      (item: { position: number; code: string; value: string }, next) => {
+      (item: { position: number; code: string; value: string; amount?: any }, next) => {
         pos = item.position;
         delete item.position;
+
+        if (item.amount == null || !Number.isFinite(Number(item.amount))) {
+          item.amount = 0;
+        }
+
         // console.log('STORING [storage.js.804:at:]',pos, item.blockheight);
         this.db.collection(collections.CACHE).insertOne(
           {

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import * as crypto from 'crypto';
-import { DucatuscoreLib } from '@ducatus/ducatuscore-crypto';
+import { DucatuscoreLib } from '@ducatuscore/crypto';
 import { CoinStorage, ICoin } from '../../../src/models/coin';
 import { IBtcTransaction, SpendOp, TransactionStorage } from '../../../src/models/transaction';
 import { SpentHeightIndicators } from '../../../src/types/Coin';
@@ -183,7 +183,7 @@ describe('Coin Model', function() {
       } as ICoin;
     });
     await addTx(mempoolTx, mempoolOutputs);
-    
+
     // update existing outputs to be spent by mempool tx
     await CoinStorage.collection.updateMany(
       { chain, network, mintTxid: tx1.hash },
@@ -221,7 +221,9 @@ describe('Coin Model', function() {
 
     const unspentCoins = tx1Outputs.filter(c => c.spentHeight < SpentHeightIndicators.minimum);
     expect(unspentCoins.length).to.equal(2);
-    expect(unspentCoins.filter(c => c.spentHeight === SpentHeightIndicators.unspent && !c.spentTxid).length).to.equal(2);
+    expect(unspentCoins.filter(c => c.spentHeight === SpentHeightIndicators.unspent && !c.spentTxid).length).to.equal(
+      2
+    );
 
     const mempoolCoins = await CoinStorage.collection.find({ chain, network, mintTxid: mempoolTxid }).toArray();
     expect(mempoolCoins.length).to.equal(3);

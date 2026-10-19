@@ -5,11 +5,9 @@ import { BitcoinBlockType } from '../../src/types/namespaces/Bitcoin/Block';
 import { resetDatabase } from '../helpers/index.js';
 import * as crypto from 'crypto';
 
-const ducatuscoreLib = require('@ducatus/ducatuscore-lib');
+const ducatuscoreLib = require('@ducatuscore/lib');
 const { Transaction, PrivateKey } = ducatuscoreLib;
 const UnspentOutput = Transaction.UnspentOutput;
-
-
 
 function randomHash() {
   return crypto.randomBytes(32).toString('hex');

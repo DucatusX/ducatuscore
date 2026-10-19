@@ -1,7 +1,7 @@
 import _ from 'lodash';
 const Ducatuscore_ = {
-  btc: require('@ducatus/ducatuscore-lib'),
-  bch: require('@ducatus/ducatuscore-lib-cash')
+  btc: require('@ducatuscore/lib'),
+  bch: require('@ducatuscore/lib-cash')
 };
 
 export class BCHAddressTranslator {

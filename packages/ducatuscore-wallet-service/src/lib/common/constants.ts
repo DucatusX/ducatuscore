@@ -1,5 +1,5 @@
 'use strict';
-import * as CWC from '@ducatus/ducatuscore-crypto';
+import * as CWC from '@ducatuscore/crypto';
 
 export const Constants = {
   CHAINS: {
@@ -47,7 +47,13 @@ export const Constants = {
     QMN: 'qmn',
     MPE: 'mpe',
     BALISOL: 'balisol',
-    'X-GEN': 'x-gen'
+    'X-GEN': 'x-gen',
+    BULT: 'bult',
+    SHGEN: 'shgen',
+    SHRES: 'shres',
+    SHBT: 'shbt',
+    NATV: 'natv',
+    SPAD: 'spad'
   },
 
   DUCATUSCORE_SUPPORTED_ETH_ERC20: {
@@ -81,7 +87,13 @@ export const Constants = {
     QMN: 'qmn',
     MPE: 'mpe',
     BALISOL: 'balisol',
-    'X-GEN': 'x-gen'
+    'X-GEN': 'x-gen',
+    BULT: 'bult',
+    SHGEN: 'shgen',
+    SHRES: 'shres',
+    SHBT: 'shbt',
+    NATV: 'natv',
+    SPAD: 'spad'
   },
   UTXO_COINS: {
     BTC: 'btc',

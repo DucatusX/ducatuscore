@@ -180,7 +180,8 @@ describe('DUCX Chain State Provider', function() {
         toHex: (val) => val && Buffer.from(val.toString()).toString('hex')
       },
       eth: {
-        getBlockNumber: sandbox.stub().resolves(1)
+        getBlockNumber: sandbox.stub().resolves(1),
+        getCode: sandbox.stub().resolves('0x')
       },
       currentProvider: {
         send: sandbox.stub()
@@ -188,6 +189,10 @@ describe('DUCX Chain State Provider', function() {
     };
 
     beforeEach(() => {
+      // The stubs live on the shared web3Stub, so their history outlives sandbox.restore()
+      web3Stub.currentProvider.send.reset();
+      web3Stub.eth.getCode.reset();
+      web3Stub.eth.getCode.resolves('0x');
       sandbox.stub(BaseEVMStateProvider, 'rpcs').value({ DUCX: {[network]: { web3: web3Stub, rpc: sinon.stub() } } });
     });
 
@@ -206,6 +211,51 @@ describe('DUCX Chain State Provider', function() {
       
       const gas = await DUCX.estimateGas({ network });
       expect(gas).to.equal(1234);
+    });
+
+    it('should include the value in the estimation', async () => {
+      web3Stub.currentProvider.send.callsArgWith(1, null, { result: '12345' });
+      await DUCX.estimateGas({ network, to: '0x123', from: '0xabc', value: 'lorem' });
+      const [opts] = web3Stub.currentProvider.send.lastCall.args;
+      expect(opts.params[0].value).to.equal(web3Stub.utils.toHex('lorem'));
+    });
+
+    it('should retry without the value when the sender cannot cover it', async () => {
+      web3Stub.currentProvider.send
+        .onFirstCall().callsArgWith(1, null, { error: { message: 'insufficient funds for gas * price + value' } })
+        .onSecondCall().callsArgWith(1, null, { result: '54321' });
+
+      const gas = await DUCX.estimateGas({ network, to: '0x123', from: '0xabc', value: 'lorem' });
+
+      expect(gas).to.equal(54321);
+      expect(web3Stub.currentProvider.send.callCount).to.equal(2);
+      expect(web3Stub.currentProvider.send.secondCall.args[0].params[0].value).to.equal(undefined);
+    });
+
+    it('should not retry on an error unrelated to funds', async () => {
+      web3Stub.currentProvider.send.callsArgWith(1, null, { error: { message: 'execution reverted' } });
+
+      try {
+        await DUCX.estimateGas({ network, to: '0x123', from: '0xabc', value: 'lorem' });
+        throw new Error('should have thrown');
+      } catch (err: any) {
+        expect(err.message).to.equal('execution reverted');
+      }
+      expect(web3Stub.currentProvider.send.callCount).to.equal(1);
+    });
+
+    it('should add a buffer for a contract recipient', async () => {
+      web3Stub.eth.getCode.resolves('0x60806040');
+      web3Stub.currentProvider.send.callsArgWith(1, null, { result: '12345' });
+      const gas = await DUCX.estimateGas({ network, to: '0x123', from: '0xabc', value: 'lorem' });
+      expect(gas).to.equal(Math.ceil(12345 * 1.1));
+    });
+
+    it('should not add a buffer when noGasBuffer is set', async () => {
+      web3Stub.eth.getCode.resolves('0x60806040');
+      web3Stub.currentProvider.send.callsArgWith(1, null, { result: '12345' });
+      const gas = await DUCX.estimateGas({ network, to: '0x123', from: '0xabc', value: 'lorem', noGasBuffer: true });
+      expect(gas).to.equal(12345);
     });
 
     it('should reject an error response', async () => {

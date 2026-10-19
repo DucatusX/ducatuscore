@@ -1,4 +1,4 @@
-import { CryptoRpc } from '@ducatus/crypto-rpc';
+import { CryptoRpc } from '@ducatuscore/crypto-rpc';
 import Web3 from 'web3';
 import * as worker from 'worker_threads';
 import logger from '../../../../logger';
@@ -77,14 +77,16 @@ export class SyncWorker {
         blockNum: block.number,
         threadId: worker.threadId
       });
-    } catch (err: any) {
-      logger.debug(`Syncing thread ${worker.threadId} error: ${err.stack}`);
+    } catch (err) {
+      const errMessage = err instanceof Error ? err.message : String(err);
+      const errStack = err instanceof Error ? err.stack : undefined;
+      logger.debug(`Syncing thread ${worker.threadId} error: ${errStack || errMessage}`);
 
-      let error = err.message;
+      let error: string | null = errMessage;
       if (error === 'Invalid JSON RPC response: ""') {
         error = null;
       }
-      if (error.includes('connect')) {
+      if (error && error.includes('connect')) {
         error = null;
         logger.info(`Syncing thread ${worker.threadId} lost connection to the node. Reconnecting.`);
         await this.connect();

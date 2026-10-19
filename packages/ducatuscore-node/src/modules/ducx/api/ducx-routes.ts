@@ -16,10 +16,10 @@ DucxRoutes.get('/api/DUCX/:network/address/:address/txs/count', async (req, res)
 });
 
 DucxRoutes.post('/api/DUCX/:network/gas', async (req, res) => {
-  const { from, to, value, data, gasPrice } = req.body;
+  const { from, to, value, data, gasPrice, noGasBuffer } = req.body;
   const { network } = req.params;
   try {
-    const gasLimit = await DUCX.estimateGas({ network, from, to, value, data, gasPrice });
+    const gasLimit = await DUCX.estimateGas({ network, from, to, value, data, gasPrice, noGasBuffer });
     res.json(gasLimit);
   } catch (err) {
     // @ts-ignore

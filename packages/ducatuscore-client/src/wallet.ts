@@ -1,11 +1,11 @@
-import { Deriver, Transactions } from '@ducatus/ducatuscore-crypto';
+import { Deriver, Transactions } from '@ducatuscore/crypto';
 import * as Bcrypt from 'bcrypt';
 import 'source-map-support/register';
 import { Client } from './client';
 import { Encryption } from './encryption';
 import { Storage } from './storage';
-const { PrivateKey } = require('@ducatus/ducatuscore-crypto').DucatuscoreLib;
-const Mnemonic = require('@ducatus/ducatuscore-mnemonic');
+const { PrivateKey } = require('@ducatuscore/crypto').DucatuscoreLib;
+const Mnemonic = require('@ducatuscore/mnemonic');
 const { ParseApiStream } = require('./stream-util');
 
 export interface KeyImport {

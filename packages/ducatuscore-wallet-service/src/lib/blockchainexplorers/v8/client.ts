@@ -3,7 +3,7 @@ import * as request from 'request-promise-native';
 import { URL } from 'url';
 import logger from '../../logger';
 
-const ducatuscoreLib = require('@ducatus/ducatuscore-lib');
+const ducatuscoreLib = require('@ducatuscore/lib');
 const secp256k1 = require('secp256k1');
 export class Client {
   authKey: { bn: { toBuffer: (arg) => Buffer } };

@@ -1,18 +1,33 @@
-import { Rate } from ".";
+import { Rate, RatesByCoin } from ".";
 
 export default {
   name: 'Ducatus',
   url: 'https://rates.ducatuscoins.com/api/v1/rates/',
-  parseFn(res, coin) {
-    const rates: Rate[] = []
+  parseFn(res) {
+    const ratesByCoin: RatesByCoin = {};
 
-    for (const code in res[coin]) {
-      rates.push({
-        code,
-        value: Number(res[coin][code])
-      });
+    for (const coinKey of Object.keys(res || {})) {
+      const sourceRates = res?.[coinKey];
+      if (!sourceRates || typeof sourceRates !== 'object') continue;
+
+      const normalizedCoin = coinKey.toLowerCase();
+      const rates: Rate[] = [];
+
+      for (const code in sourceRates) {
+        const value = Number(sourceRates[code]);
+        if (!Number.isFinite(value)) continue;
+
+        rates.push({
+          code,
+          value
+        });
+      }
+
+      if (rates.length) {
+        ratesByCoin[normalizedCoin] = rates;
+      }
     }
 
-    return rates;
+    return ratesByCoin;
   }
 };

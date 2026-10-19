@@ -19,8 +19,8 @@ const {
   MSG_PORT
 } = process.env;
 const ducxNode = DUCX_NODE_URL ? `${DUCX_NODE_PROTOCOL || 'http'}://${DUCX_NODE_URL}` : 'http://localhost:3000';
-const ducNode = DUCX_NODE_URL ? `${DUC_NODE_PROTOCOL || 'http'}://${DUC_NODE_URL}` : 'http://localhost:3000';
-const ducxNodeWs = DUC_NODE_URL ? `${DUCX_WS_NODE_PROTOCOL || 'http'}://${DUCX_NODE_URL}` : 'ws://localhost:3000';
+const ducNode = DUC_NODE_URL ? `${DUC_NODE_PROTOCOL || 'http'}://${DUC_NODE_URL}` : 'http://localhost:3000';
+const ducxNodeWs = DUCX_NODE_URL ? `${DUCX_WS_NODE_PROTOCOL || 'http'}://${DUCX_NODE_URL}` : 'ws://localhost:3000';
 const ducNodeWs = DUC_NODE_URL ? `${DUC_WS_NODE_PROTOCOL || 'http'}://${DUC_NODE_URL}` : 'ws://localhost:3000';
 
 const Config = () => {
@@ -145,6 +145,47 @@ const Config = () => {
     },
     fiatRateServiceOpts: {
       defaultProvider: 'BitPay',
+      providersByCoin: {
+        btc: 'Coinbase',
+        bch: 'BitPay',
+        eth: 'BitPay',
+        xrp: 'BitPay',
+        bnb: 'BitPay',
+        shib: 'BitPay',
+        ape: 'BitPay',
+        usdc: 'BitPay',
+        usdp: 'BitPay',
+        pax: 'BitPay',
+        gusd: 'BitPay',
+        busd: 'BitPay',
+        dai: 'BitPay',
+        euroc: 'BitPay',
+        usdt: 'BitPay',
+        matic: 'BitPay',
+        duc: 'Ducatus',
+        ducx: 'Ducatus',
+        jamasy: 'Ducatus',
+        nuyasa: 'Ducatus',
+        sunoba: 'Ducatus',
+        dscmed: 'Ducatus',
+        pog1: 'Ducatus',
+        wde: 'Ducatus',
+        mdxb: 'Ducatus',
+        'g.o.l.d.': 'Ducatus',
+        jwan: 'Ducatus',
+        tkf: 'Ducatus',
+        'aa+': 'Ducatus',
+        qmn: 'Ducatus',
+        mpe: 'Ducatus',
+        balisol: 'Ducatus',
+        'x-gen': 'Ducatus',
+        bult: 'Ducatus',
+        shgen: 'Ducatus',
+        shres: 'Ducatus',
+        shbt: 'Ducatus',
+        natv: 'Ducatus',
+        spad: 'Ducatus'
+      },
       fetchInterval: 5 // in minutes
     },
     maintenanceOpts: {

@@ -7,12 +7,12 @@
  ***
  *** This does a dry run by default. Use "--dryrun false"
  *** to execute outside of dry run.
- *** 
+ ***
  *** By default this will run for BTC on testnet. To change this
  *** use the --chain [CHAIN] and --network [NETWORk] flags.
  *** You must have valid RPC connection specified in ducatuscore.config.json.
  ********************************************/
-const { CryptoRpc } = require('@ducatus/crypto-rpc');
+const { CryptoRpc } = require('@ducatuscore/crypto-rpc');
 const { TransactionStorage } = require('../build/src/models/transaction');
 const { CoinStorage } = require('../build/src/models/coin');
 const fs = require('fs');
@@ -27,7 +27,7 @@ class Migration {
     this.coinModel = coinModel;
   }
   async connect() {
-    console.log("Attempting connection to the database...")
+    console.log('Attempting connection to the database...');
     try {
       if (!Storage.connected) {
         await Storage.start();
@@ -39,7 +39,7 @@ class Migration {
   }
 
   async endProcess() {
-    if (Storage.connected){
+    if (Storage.connected) {
       await Storage.stop();
     }
     process.exit();
@@ -55,7 +55,9 @@ class Migration {
 
     const helpIdx = args.findIndex(i => i == '--help');
     if (helpIdx >= 0) {
-      console.log("Usage: node fixUnspentInputs.js --chain [CHAIN] --network [NETWORK] --dryrun [BOOL - default: true]");
+      console.log(
+        'Usage: node fixUnspentInputs.js --chain [CHAIN] --network [NETWORK] --dryrun [BOOL - default: true]'
+      );
       this.endProcess();
     }
 
@@ -80,7 +82,7 @@ class Migration {
     }
 
     if (!retArgs.chain || !retArgs.network) {
-      console.log("You must specify a chain and network for the script to run on. Use --help for more info.");
+      console.log('You must specify a chain and network for the script to run on. Use --help for more info.');
       this.endProcess();
     }
 
@@ -121,7 +123,7 @@ class Migration {
       {}
     ).get(chain);
 
-    let data = (await stream.next());
+    let data = await stream.next();
     while (data != null) {
       let isUnspent = false;
       // If spent (or in mempool) then this returns an error otherwise returns data on unspent output
@@ -132,7 +134,7 @@ class Migration {
         });
         isUnspent = !!coinData;
       } catch (e) {
-        if (e.message && e.message.match(`No info found for ${data.mintTxid}`)){
+        if (e.message && e.message.match(`No info found for ${data.mintTxid}`)) {
           // Coin must be spent or actually pending in mempool - do nothing
         } else {
           // Lets log the error in case it is config related
@@ -154,7 +156,7 @@ class Migration {
         }
       }
       // get next record
-      data = (await stream.next());
+      data = await stream.next();
     }
 
     console.log(`Finished ${dryrun ? 'scanning' : 'updating'} records for ${chain}-${network}`);
@@ -186,8 +188,7 @@ migration
   })
   .catch(err => {
     console.error(err);
-    migration.endProcess()
-    .catch(err => { 
+    migration.endProcess().catch(err => {
       console.error(err);
       process.exit(1);
     });

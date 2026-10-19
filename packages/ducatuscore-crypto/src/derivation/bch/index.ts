@@ -1,5 +1,5 @@
 import { AbstractDucatuscoreLibDeriver } from '../btc';
-const DucatuscoreLibCash = require('@ducatus/ducatuscore-lib-cash');
+const DucatuscoreLibCash = require('@ducatuscore/lib-cash');
 export class BchDeriver extends AbstractDucatuscoreLibDeriver {
   ducatuscoreLib = DucatuscoreLibCash;
   deriveAddress(network, pubKey, addressIndex, isChange) {

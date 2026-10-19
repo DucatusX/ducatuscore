@@ -1,5 +1,5 @@
-import { Wallet } from '@ducatus/ducatuscore-client';
-import { ParseApiStream } from '@ducatus/ducatuscore-client';
+import { Wallet } from '@ducatuscore/client';
+import { ParseApiStream } from '@ducatuscore/client';
 import { expect } from 'chai';
 import { ObjectId } from 'mongodb';
 import * as io from 'socket.io-client';
@@ -50,12 +50,12 @@ async function getWalletUtxos(wallet: Wallet) {
   const utxos = new Array<MongoBound<ICoin>>();
   return new Promise<Array<MongoBound<ICoin>>>(resolve =>
     wallet
-    .getUtxos()
-    .pipe(new ParseApiStream())
-    .on('data', (utxo: MongoBound<ICoin>) => {
-      utxos.push(utxo);
-    })
-    .on('end', () => resolve(utxos))
+      .getUtxos()
+      .pipe(new ParseApiStream())
+      .on('data', (utxo: MongoBound<ICoin>) => {
+        utxos.push(utxo);
+      })
+      .on('end', () => resolve(utxos))
   );
 }
 

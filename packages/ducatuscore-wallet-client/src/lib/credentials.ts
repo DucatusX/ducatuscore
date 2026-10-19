@@ -1,6 +1,6 @@
 'use strict';
 
-import { DucatuscoreLib } from '@ducatus/ducatuscore-crypto';
+import { DucatuscoreLib } from '@ducatuscore/crypto';
 
 import { Constants, Utils } from './common';
 const $ = require('preconditions').singleton();
@@ -45,7 +45,7 @@ export class Credentials {
     'rootPath', // this is only for information
     'keyId', // this is only for information
     'token', // this is for a ERC20 token
-    'multisigEthInfo' // this is for a MULTISIG eth wallet
+    'multisigEthInfo', // this is for a MULTISIG eth wallet
   ];
   version: number;
   account: number;
@@ -104,10 +104,7 @@ export class Credentials {
 
     // this allows to set P2SH in old n=1 wallets
     if (_.isUndefined(opts.addressType)) {
-      x.addressType =
-        opts.n == 1
-          ? Constants.SCRIPT_TYPES.P2PKH
-          : Constants.SCRIPT_TYPES.P2SH;
+      x.addressType = opts.n == 1 ? Constants.SCRIPT_TYPES.P2PKH : Constants.SCRIPT_TYPES.P2SH;
     } else {
       x.addressType = opts.addressType;
     }
@@ -124,9 +121,7 @@ export class Credentials {
     x.requestPubKey = priv.toPublicKey().toString();
 
     const prefix = 'personalKey';
-    const entropySource = Ducatuscore.crypto.Hash.sha256(priv.toBuffer()).toString(
-      'hex'
-    );
+    const entropySource = Ducatuscore.crypto.Hash.sha256(priv.toBuffer()).toString('hex');
     const b = Buffer.from(entropySource, 'hex');
     const b2 = Ducatuscore.crypto.Hash.sha256hmac(b, Buffer.from(prefix));
     x.personalEncryptingKey = b2.slice(0, 16).toString('base64');
@@ -134,8 +129,8 @@ export class Credentials {
     x.publicKeyRing = [
       {
         xPubKey: x.xPubKey,
-        requestPubKey: x.requestPubKey
-      }
+        requestPubKey: x.requestPubKey,
+      },
     ];
 
     return x;
@@ -281,16 +276,13 @@ export class Credentials {
     this.m = m;
 
     if (opts.useNativeSegwit) {
-      this.addressType =
-        n == 1 ? Constants.SCRIPT_TYPES.P2WPKH : Constants.SCRIPT_TYPES.P2WSH;
+      this.addressType = n == 1 ? Constants.SCRIPT_TYPES.P2WPKH : Constants.SCRIPT_TYPES.P2WSH;
     }
 
     if (this.n != n && !opts.allowOverwrite) {
       // we always allow multisig n overwrite
       if (this.n == 1 || n == 1) {
-        throw new Error(
-          `Bad nr of copayers in addWalletInfo: this: ${this.n} got: ${n}`
-        );
+        throw new Error(`Bad nr of copayers in addWalletInfo: this: ${this.n} got: ${n}`);
       }
     }
 
@@ -302,8 +294,8 @@ export class Credentials {
       this.addPublicKeyRing([
         {
           xPubKey: this.xPubKey,
-          requestPubKey: this.requestPubKey
-        }
+          requestPubKey: this.requestPubKey,
+        },
       ]);
     }
   }
@@ -319,11 +311,7 @@ export class Credentials {
   isComplete() {
     if (!this.m || !this.n) return false;
     if (
-      (
-        this.chain === 'btc' ||
-        this.chain === 'bch' ||
-        this.chain === 'duc' 
-      ) &&
+      (this.chain === 'btc' || this.chain === 'bch' || this.chain === 'duc') &&
       (!this.publicKeyRing || this.publicKeyRing.length != this.n)
     )
       return false;

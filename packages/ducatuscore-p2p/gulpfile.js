@@ -1,4 +1,4 @@
 'use strict';
 
-var startGulp = require('@ducatus/ducatuscore-build');
-module.exports = startGulp('p2p', {skipBrowser: true})
+var startGulp = require('@ducatuscore/build');
+module.exports = startGulp('p2p', { skipBrowser: true });

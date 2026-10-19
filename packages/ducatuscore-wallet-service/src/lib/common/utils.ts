@@ -1,15 +1,15 @@
-import * as CWC from '@ducatus/ducatuscore-crypto';
+import * as CWC from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { logger } from '../logger';
 
 const $ = require('preconditions').singleton();
-const ducatuscore = require('@ducatus/ducatuscore-lib');
+const ducatuscore = require('@ducatuscore/lib');
 const crypto = ducatuscore.crypto;
 const secp256k1 = require('secp256k1');
-const Ducatuscore = require('@ducatus/ducatuscore-lib');
+const Ducatuscore = require('@ducatuscore/lib');
 const Ducatuscore_ = {
   btc: Ducatuscore,
-  bch: require('@ducatus/ducatuscore-lib-cash')
+  bch: require('@ducatuscore/lib-cash')
 };
 
 export class Utils {
@@ -142,7 +142,7 @@ export class Utils {
   }
 
   static formatAmountInBtc(amount) {
-    const numAmount = Number(amount) // to deal with amount as string
+    const numAmount = Number(amount); // to deal with amount as string
 
     return (
       Utils.formatAmount(numAmount, 'btc', {

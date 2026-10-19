@@ -1,4 +1,2 @@
-
-var startGulp = require('@ducatus/ducatuscore-build');
-Object.assign(exports, startGulp('mnemonic'))
-
+var startGulp = require('@ducatuscore/build');
+Object.assign(exports, startGulp('mnemonic'));

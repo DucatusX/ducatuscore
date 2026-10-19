@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib');
+var ducatuscore = require('@ducatuscore/lib');
 var BufferUtil = ducatuscore.util.buffer;
 var BloomFilter = require('../../bloomfilter');
 var $ = ducatuscore.util.preconditions;
@@ -31,7 +31,7 @@ FilterloadMessage.prototype.setPayload = function(payload) {
 };
 
 FilterloadMessage.prototype.getPayload = function() {
-  if(this.filter) {
+  if (this.filter) {
     return this.filter.toBuffer();
   } else {
     return BufferUtil.EMPTY_BUFFER;

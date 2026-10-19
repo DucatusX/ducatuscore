@@ -1,11 +1,12 @@
-import { Transactions, Validation } from '@ducatus/ducatuscore-crypto';
-import { Web3 } from '@ducatus/ducatuscore-crypto';
+import { Transactions, Validation } from '@ducatuscore/crypto';
+import { Web3 } from '@ducatuscore/crypto';
 import _ from 'lodash';
 import { IAddress } from 'src/lib/model/address';
-import { IChain, INotificationData } from '..';
+import { IChain } from '..';
 import { Common } from '../../common';
 import { ClientError } from '../../errors/clienterror';
 import logger from '../../logger';
+import { lockedSumWei, toWeiBN, txpTotalWei } from '../weiamount';
 import { ERC20Abi } from './abi-erc20';
 import { InvoiceAbi } from './abi-invoice';
 const { toBN } = Web3.utils;
@@ -35,19 +36,22 @@ export class EthChain implements IChain {
   /**
    * Converts Ducatuscore Balance Response.
    * @param {Object} ducatuscoreBalance - { unconfirmed, confirmed, balance }
-   * @param {Number} locked - Sum of txp.amount
-   * @returns {Object} balance - Total amount & locked amount.
+   * @param {BN} locked - Sum of txp.amount, in wei
+   * @returns {Object} balance - Total amount & locked amount, as decimal strings in wei.
    */
   private convertDucatuscoreBalance(ducatuscoreBalance, locked) {
-    const { unconfirmed, confirmed, balance } = ducatuscoreBalance;
+    const { confirmed, balance } = ducatuscoreBalance;
     // we ASUME all locked as confirmed, for ETH.
+    const totalBN = toWeiBN(balance);
+    const confirmedBN = toWeiBN(confirmed);
+    const lockedBN = toWeiBN(locked);
     const convertedBalance = {
-      totalAmount: balance,
-      totalConfirmedAmount: confirmed,
-      lockedAmount: locked,
-      lockedConfirmedAmount: locked,
-      availableAmount: balance - locked,
-      availableConfirmedAmount: confirmed - locked,
+      totalAmount: totalBN.toString(),
+      totalConfirmedAmount: confirmedBN.toString(),
+      lockedAmount: lockedBN.toString(),
+      lockedConfirmedAmount: lockedBN.toString(),
+      availableAmount: totalBN.sub(lockedBN).toString(),
+      availableConfirmedAmount: confirmedBN.sub(lockedBN).toString(),
       byAddress: []
     };
     return convertedBalance;
@@ -88,7 +92,7 @@ export class EthChain implements IChain {
       server.getPendingTxs(opts, (err, txps) => {
         if (err) return cb(err);
         // Do not lock eth multisig amount
-        const lockedSum = opts.multisigContractAddress ? 0 : _.sumBy(txps, 'amount') || 0;
+        const lockedSum = opts.multisigContractAddress ? toWeiBN(0) : lockedSumWei(txps);
         const convertedBalance = this.convertDucatuscoreBalance(balance, lockedSum);
         server.storage.fetchAddresses(server.walletId, (err, addresses: IAddress[]) => {
           if (err) return cb(err);
@@ -111,12 +115,12 @@ export class EthChain implements IChain {
   getWalletSendMaxInfo(server, wallet, opts, cb) {
     server.getBalance({}, (err, balance) => {
       if (err) return cb(err);
-      const { totalAmount, availableAmount } = balance;
+      const { availableAmount } = balance;
       let fee = opts.feePerKb * Defaults.MIN_GAS_LIMIT;
       return cb(null, {
         utxosBelowFee: 0,
         amountBelowFee: 0,
-        amount: availableAmount - fee,
+        amount: toWeiBN(availableAmount).sub(toWeiBN(fee)).toString(),
         feePerKb: opts.feePerKb,
         fee
       });
@@ -151,6 +155,7 @@ export class EthChain implements IChain {
         let gasLimit = 0; // Gas limit for all recepients. used for contract interactions that rollup recepients
         let fee = 0;
         const defaultGasLimit = this.getDefaultGasLimit(opts);
+        const isSendMax = _.isNumber(opts.fee);
         let outputAddresses = []; // Parameter for MuliSend contract
         let outputAmounts = []; // Parameter for MuliSend contract
         let totalValue = toBN(0); // Parameter for MuliSend contract
@@ -179,7 +184,8 @@ export class EthChain implements IChain {
                 to,
                 value,
                 data: output.data,
-                gasPrice
+                gasPrice,
+                noGasBuffer: isSendMax
               });
               output.gasLimit = inGasLimit || defaultGasLimit;
             } catch (err) {
@@ -188,7 +194,7 @@ export class EthChain implements IChain {
           } else {
             inGasLimit = output.gasLimit;
           }
-          if (_.isNumber(opts.fee)) {
+          if (isSendMax) {
             // This is used for sendmax
             gasPrice = feePerKb = Number((opts.fee / (inGasLimit || defaultGasLimit)).toFixed());
           }
@@ -225,14 +231,7 @@ export class EthChain implements IChain {
   }
 
   getDucatuscoreTx(txp, opts = { signed: true }) {
-    const {
-      data,
-      outputs,
-      tokenAddress,
-      multisigContractAddress,
-      multiSendContractAddress,
-      isTokenSwap
-    } = txp;
+    const { data, outputs, tokenAddress, multisigContractAddress, multiSendContractAddress, isTokenSwap } = txp;
     const isERC20 = tokenAddress && !isTokenSwap;
     const isETHMULTISIG = multisigContractAddress;
     const chain = isETHMULTISIG ? 'ETHMULTISIG' : isERC20 ? 'ETHERC20' : 'ETH';
@@ -371,29 +370,30 @@ export class EthChain implements IChain {
           return totalAmount;
         };
 
-        const { totalAmount, availableAmount } = balance;
+        const totalAmount = toWeiBN(balance.totalAmount);
+        const availableAmount = toWeiBN(balance.availableAmount);
 
-        const txpTotalAmount = txp.getTotalAmount(opts);
+        const txpTotalAmount = txpTotalWei(txp);
 
-        if (totalAmount < txpTotalAmount) {
+        if (totalAmount.lt(txpTotalAmount)) {
           return cb(Errors.INSUFFICIENT_FUNDS);
-        } else if (availableAmount < txpTotalAmount) {
+        } else if (availableAmount.lt(txpTotalAmount)) {
           return cb(Errors.LOCKED_FUNDS);
         } else {
           if (opts.tokenAddress || opts.multisigContractAddress) {
             // ETH linked wallet balance
             server.getBalance({}, (err, ethBalance) => {
               if (err) return cb(err);
-              const { totalAmount, availableAmount } = ethBalance;
-              if (totalAmount < txp.fee) {
+              const fee = toWeiBN(txp.fee);
+              if (toWeiBN(ethBalance.totalAmount).lt(fee)) {
                 return cb(this.getInsufficientFeeError(txp));
-              } else if (availableAmount < txp.fee) {
+              } else if (toWeiBN(ethBalance.availableAmount).lt(fee)) {
                 return cb(this.getLockedFeeError(txp));
               } else {
                 return cb(this.checkTx(txp));
               }
             });
-          } else if (availableAmount - txp.fee < txpTotalAmount) {
+          } else if (availableAmount.sub(toWeiBN(txp.fee)).lt(txpTotalAmount)) {
             return cb(
               new ClientError(
                 Errors.codes.INSUFFICIENT_FUNDS_FOR_FEE,

@@ -4,7 +4,7 @@ var chai = require('chai');
 var should = chai.should();
 
 var Mnemonic = require('..');
-var errors = require('@ducatus/ducatuscore-lib').errors;
+var errors = require('@ducatuscore/lib').errors;
 var bip39_vectors = require('./data/fixtures.json');
 const unorm = require('unorm');
 
@@ -16,7 +16,6 @@ describe('Mnemonic', function() {
   });
 
   describe('# Mnemonic', function() {
-
     describe('Constructor', function() {
       it('does not require new keyword', function() {
         var mnemonic = Mnemonic(); // jshint ignore:line
@@ -26,25 +25,25 @@ describe('Mnemonic', function() {
       it('should fail with invalid data', function() {
         (function() {
           return new Mnemonic({});
-        }).should.throw(errors.InvalidArgument);
+        }.should.throw(errors.InvalidArgument));
       });
 
       it('should fail with unknown word list', function() {
         (function() {
           return new Mnemonic('pilots foster august tomorrow kit daughter unknown awesome model town village master');
-        }).should.throw(errors.Mnemonic.UnknownWordlist);
+        }.should.throw(errors.Mnemonic.UnknownWordlist));
       });
 
       it('should fail with invalid mnemonic', function() {
         (function() {
           return new Mnemonic('monster foster august tomorrow kit daughter unknown awesome model town village pilot');
-        }).should.throw(errors.Mnemonic.InvalidMnemonic);
+        }.should.throw(errors.Mnemonic.InvalidMnemonic));
       });
 
       it('should fail with invalid ENT', function() {
         (function() {
           return new Mnemonic(64);
-        }).should.throw(errors.InvalidArgument);
+        }.should.throw(errors.InvalidArgument));
       });
 
       it('constructor defaults to english worldlist', function() {
@@ -67,9 +66,7 @@ describe('Mnemonic', function() {
         var mnemonic = new Mnemonic('afirmar diseño hielo fideo etapa ogro cambio fideo toalla pomelo número buscar');
         mnemonic.wordlist.should.equal(Mnemonic.Words.SPANISH);
       });
-
     });
-
 
     it('english wordlist is complete', function() {
       Mnemonic.Words.ENGLISH.length.should.equal(2048);
@@ -132,13 +129,17 @@ describe('Mnemonic', function() {
       var invalid = Mnemonic.isValid('afirmar diseño hielo fideo etapa ogro cambio fideo hielo pomelo número buscar');
       invalid.should.equal(false);
 
-      var invalid2 = Mnemonic.isValid('afirmar diseño hielo fideo etapa ogro cambio fideo hielo pomelo número oneInvalidWord');
+      var invalid2 = Mnemonic.isValid(
+        'afirmar diseño hielo fideo etapa ogro cambio fideo hielo pomelo número oneInvalidWord'
+      );
       invalid2.should.equal(false);
 
       var invalid3 = Mnemonic.isValid('totally invalid phrase');
       invalid3.should.equal(false);
 
-      var valid2 = Mnemonic.isValid('caution opprimer époque belote devenir ficeler filleul caneton apologie nectar frapper fouiller');
+      var valid2 = Mnemonic.isValid(
+        'caution opprimer époque belote devenir ficeler filleul caneton apologie nectar frapper fouiller'
+      );
       valid2.should.equal(true);
     });
 
@@ -173,25 +174,25 @@ describe('Mnemonic', function() {
     it('Mnemonic.fromSeed should fail with invalid wordlist', function() {
       (function() {
         return Mnemonic.fromSeed(Buffer.alloc(1));
-      }).should.throw(errors.InvalidArgument);
+      }.should.throw(errors.InvalidArgument));
     });
 
     it('Mnemonic.fromSeed should fail with invalid seed', function() {
       (function() {
         return Mnemonic.fromSeed();
-      }).should.throw(errors.InvalidArgument);
+      }.should.throw(errors.InvalidArgument));
     });
 
     it('should fail with invalid entropy', function() {
       (function() {
         return Mnemonic.fromSeed(Buffer.alloc(512), Mnemonic.Words.ENGLISH);
-      }).should.throw(errors.InvalidArgument);
+      }.should.throw(errors.InvalidArgument));
     });
 
     it('Constructor should fail with invalid seed', function() {
       (function() {
         return new Mnemonic(Buffer.alloc(1));
-      }).should.throw(errors.InvalidEntropy);
+      }.should.throw(errors.InvalidEntropy));
     });
 
     // To add new vectors for different languages:
@@ -230,7 +231,5 @@ describe('Mnemonic', function() {
         }
       }
     }
-
   });
-
 });

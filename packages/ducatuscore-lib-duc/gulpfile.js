@@ -1,4 +1,4 @@
 'use strict';
 
-var startGulp = require('@ducatus/ducatuscore-build');
+var startGulp = require('@ducatuscore/build');
 module.exports = startGulp('lib');

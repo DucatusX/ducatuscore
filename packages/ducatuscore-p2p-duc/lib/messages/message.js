@@ -1,6 +1,6 @@
 'use strict';
 
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var $ = ducatuscore.util.preconditions;
 var BufferWriter = ducatuscore.encoding.BufferWriter;
 var Hash = ducatuscore.crypto.Hash;

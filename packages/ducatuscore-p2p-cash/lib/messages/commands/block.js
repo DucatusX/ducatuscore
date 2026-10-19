@@ -2,7 +2,7 @@
 
 var Message = require('../message');
 var inherits = require('util').inherits;
-var ducatuscore = require('@ducatus/ducatuscore-lib-cash');
+var ducatuscore = require('@ducatuscore/lib-cash');
 var $ = ducatuscore.util.preconditions;
 var _ = ducatuscore.deps._;
 
@@ -17,10 +17,7 @@ function BlockMessage(arg, options) {
   Message.call(this, options);
   this.Block = options.Block;
   this.command = 'block';
-  $.checkArgument(
-    _.isUndefined(arg) || arg instanceof this.Block,
-    'An instance of Block or undefined is expected'
-  );
+  $.checkArgument(_.isUndefined(arg) || arg instanceof this.Block, 'An instance of Block or undefined is expected');
   this.block = arg;
 }
 inherits(BlockMessage, Message);

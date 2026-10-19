@@ -6,7 +6,7 @@ var chai = require('chai');
 var should = chai.should();
 var expect = chai.expect;
 
-var ducatuscore = require('@ducatus/ducatuscore-lib-duc');
+var ducatuscore = require('@ducatuscore/lib-duc');
 var P2P = require('../');
 var Peer = P2P.Peer;
 var MessagesData = require('./data/messages');
@@ -24,7 +24,6 @@ function getPayloadBuffer(messageBuffer) {
 }
 
 describe('Pool', function() {
-
   it('create instance', function() {
     var pool = new Pool();
     should.exist(pool.network);
@@ -34,7 +33,7 @@ describe('Pool', function() {
   });
 
   it('create instance setting the network', function() {
-    var pool = new Pool({network: Networks.testnet});
+    var pool = new Pool({ network: Networks.testnet });
     pool.network.should.equal(Networks.testnet);
   });
 
@@ -42,7 +41,7 @@ describe('Pool', function() {
     var stub = sinon.stub(dns, 'resolve', function(seed, callback) {
       callback(null, ['10.10.10.1', '10.10.10.2', '10.10.10.3']);
     });
-    var pool = new Pool({network: Networks.livenet});
+    var pool = new Pool({ network: Networks.livenet });
     pool.connect();
     pool.disconnect();
     pool._addrs.length.should.equal(3);
@@ -100,7 +99,6 @@ describe('Pool', function() {
   });
 
   it('add new addrs as they are announced over the network', function(done) {
-
     // only emit an event, no need to connect
     var peerConnectStub = sinon.stub(Peer.prototype, 'connect', function() {
       this._readMessage();
@@ -147,11 +145,9 @@ describe('Pool', function() {
     });
 
     pool.connect();
-
   });
 
   it('can optionally not listen to new addrs messages', function(done) {
-
     // only emit an event, no need to connect
     var peerConnectStub = sinon.stub(Peer.prototype, 'connect', function() {
       this._readMessage();
@@ -199,7 +195,6 @@ describe('Pool', function() {
     });
 
     pool.connect();
-
   });
 
   it('propagate connect, ready, and disconnect peer events', function(done) {
@@ -253,12 +248,12 @@ describe('Pool', function() {
       this.emit('connect', this, {});
     });
     [true, false].forEach(function(relay) {
-      var pool = new Pool({relay: relay, dnsSeed: false});
+      var pool = new Pool({ relay: relay, dnsSeed: false });
       pool._addAddr({ ip: { v4: 'localhost' } });
       pool.on('peerconnect', function(peer, addr) {
         peer.relay.should.equal(relay);
         pool.disconnect();
-        if(++count == 2) {
+        if (++count == 2) {
           done();
         }
       });
@@ -276,7 +271,7 @@ describe('Pool', function() {
     var dnsStub = sinon.stub(dns, 'resolve', function(seed, callback) {
       callback(new Error('A DNS error'));
     });
-    var pool = new Pool({network: Networks.livenet, maxSize: 1});
+    var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
     pool.once('seederror', function(error) {
       should.exist(error);
       pool.disconnect();
@@ -290,7 +285,7 @@ describe('Pool', function() {
     var dnsStub = sinon.stub(dns, 'resolve', function(seed, callback) {
       callback(null, []);
     });
-    var pool = new Pool({network: Networks.livenet, maxSize: 1});
+    var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
     pool.once('seederror', function(error) {
       should.exist(error);
       pool.disconnect();
@@ -324,7 +319,7 @@ describe('Pool', function() {
       dnsSeed: false,
       addrs: [
         {
-          ip:{
+          ip: {
             v4: 'localhost'
           }
         }
@@ -337,7 +332,7 @@ describe('Pool', function() {
   });
 
   it('not call _fillConnections if keepalive is false on seed', function(done) {
-    var pool = new Pool({network: Networks.livenet, maxSize: 1});
+    var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
     pool._fillConnections = sinon.stub();
     pool.keepalive = false;
     pool.on('seed', function() {
@@ -350,23 +345,27 @@ describe('Pool', function() {
   });
 
   it('keep original time for handling peeraddr messages', function(done) {
-    var pool = new Pool({network: Networks.livenet, maxSize: 1});
+    var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
     var now = new Date();
     pool._addAddr = function(addr) {
       addr.time.should.equal(now);
       done();
     };
-    pool.emit('peeraddr', {}, {
-      addresses: [
-        {
-          time: now
-        }
-      ]
-    });
+    pool.emit(
+      'peeraddr',
+      {},
+      {
+        addresses: [
+          {
+            time: now
+          }
+        ]
+      }
+    );
   });
 
   it('replace time if time is invalid on peeraddr messages', function(done) {
-    var pool = new Pool({network: Networks.livenet, maxSize: 1});
+    var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
     var future = new Date(new Date().getTime() + 10 * 70 * 1000);
     var past = new Date(new Date().getTime() - 4 * 24 * 60 * 60 * 1000); // 4 days ago
     pool._addAddr = function(addr) {
@@ -374,18 +373,22 @@ describe('Pool', function() {
       addr.time.getTime().should.be.below(past.getTime());
       done();
     };
-    pool.emit('peeraddr', {}, {
-      addresses: [
-        {
-          time: future
-        }
-      ]
-    });
+    pool.emit(
+      'peeraddr',
+      {},
+      {
+        addresses: [
+          {
+            time: future
+          }
+        ]
+      }
+    );
   });
 
   describe('#_removeConnectedPeer', function() {
     it('disconnect peer if peer status is not disconnected', function(done) {
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       /* jshint sub: true */
       pool._connectedPeers['hash'] = {
         status: Peer.STATUS.CONNECTED,
@@ -402,7 +405,7 @@ describe('Pool', function() {
   describe('#_connectPeer', function() {
     it('connect ipv6 peer', function() {
       var connectStub = sinon.stub(Peer.prototype, 'connect');
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       var ipv6 = '2001:0db8:85a3:0042:1000:8a2e:0370:7334';
       pool._addPeerEventHandlers = sinon.stub();
       pool._connectPeer({
@@ -420,7 +423,7 @@ describe('Pool', function() {
 
     it('will pass network to peer', function() {
       var connectStub = sinon.stub(Peer.prototype, 'connect');
-      var pool = new Pool({network: Networks.testnet, maxSize: 1});
+      var pool = new Pool({ network: Networks.testnet, maxSize: 1 });
       var ipv6 = '2001:0db8:85a3:0042:1000:8a2e:0370:7334';
       pool._addPeerEventHandlers = sinon.stub();
       pool._connectPeer({
@@ -436,44 +439,50 @@ describe('Pool', function() {
   });
 
   describe('#_addConnectedPeer', function() {
-
     it('should add a peer', function() {
       /* jshint sub: true */
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool._addPeerEventHandlers = sinon.stub();
-      pool._addConnectedPeer({
-        on: sinon.stub()
-      }, {hash: 'hash'});
+      pool._addConnectedPeer(
+        {
+          on: sinon.stub()
+        },
+        { hash: 'hash' }
+      );
       should.exist(pool._connectedPeers['hash']);
       pool._addPeerEventHandlers.calledOnce.should.equal(true);
     });
 
     it('should not already added peer', function() {
       /* jshint sub: true */
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool._addPeerEventHandlers = sinon.stub();
       pool._connectedPeers['hash'] = {};
-      pool._addConnectedPeer({
-        on: sinon.stub()
-      }, {hash: 'hash'});
+      pool._addConnectedPeer(
+        {
+          on: sinon.stub()
+        },
+        { hash: 'hash' }
+      );
       should.exist(pool._connectedPeers['hash']);
       pool._addPeerEventHandlers.calledOnce.should.equal(false);
     });
 
     it('will pass network to peer', function() {
       /* jshint sub: true */
-      var pool = new Pool({network: Networks.testnet, maxSize: 1});
-      pool._addConnectedPeer({
-        on: sinon.stub()
-      }, {hash: 'hash'});
+      var pool = new Pool({ network: Networks.testnet, maxSize: 1 });
+      pool._addConnectedPeer(
+        {
+          on: sinon.stub()
+        },
+        { hash: 'hash' }
+      );
       should.exist(pool._connectedPeers['hash']);
       pool._connectedPeers['hash'].network.should.equal(pool.network);
     });
-
   });
 
   describe('#listen', function() {
-
     it('create a server', function(done) {
       var netStub = sinon.stub(net, 'createServer', function() {
         return {
@@ -483,7 +492,7 @@ describe('Pool', function() {
           }
         };
       });
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool.listen();
     });
 
@@ -500,7 +509,7 @@ describe('Pool', function() {
       sinon.stub(net, 'isIPv6', function() {
         return true;
       });
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool._addAddr = function(addr) {
         should.exist(addr.ip.v6);
         addr.ip.v6.should.equal(ipv6);
@@ -523,7 +532,7 @@ describe('Pool', function() {
           listen: sinon.stub()
         };
       });
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool._addAddr = function(addr) {
         should.exist(addr.port);
         addr.port.should.equal(port);
@@ -547,7 +556,7 @@ describe('Pool', function() {
       sinon.stub(net, 'isIPv6', function() {
         return false;
       });
-      var pool = new Pool({network: Networks.livenet, maxSize: 1});
+      var pool = new Pool({ network: Networks.livenet, maxSize: 1 });
       pool._addAddr = function(addr) {
         should.exist(addr.ip.v4);
         addr.ip.v4.should.equal(ipv4);
@@ -558,8 +567,5 @@ describe('Pool', function() {
       pool._addConnectedPeer = sinon.stub();
       pool.listen();
     });
-
   });
-
-
 });
