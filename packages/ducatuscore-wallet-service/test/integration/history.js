@@ -324,6 +324,36 @@ describe('History', function() {
       });
     });
 
+    it('should serve the cached history when the explorer fails to return new txs', function(done) {
+      var _cache = Defaults.CONFIRMATIONS_TO_START_CACHING;
+      Defaults.CONFIRMATIONS_TO_START_CACHING = 10;
+      helpers.stubHistory(50, BCHEIGHT); //(0->49)
+
+      // this call is to fill the cache (txs 10..49 are confirmed enough)
+      server.getTxHistory({ limit: 20 }, function(err) {
+        should.not.exist(err);
+        // e.g. the node's indexer ran out of quota
+        blockchainExplorer.getTransactions = (wallet, startBlock, cb) => cb(new Error('HTTP 502 ran out of cu'));
+        server.getTxHistory({ limit: 20 }, function(err, txs, fromCache) {
+          Defaults.CONFIRMATIONS_TO_START_CACHING = _cache;
+          should.not.exist(err);
+          fromCache.should.equal(true);
+          txs.length.should.equal(20);
+          _.first(txs).txid.should.equal('txid10');
+          done();
+        });
+      });
+    });
+
+    it('should still fail when the explorer fails and there is no cached history', function(done) {
+      blockchainExplorer.getTransactions = (wallet, startBlock, cb) => cb(new Error('HTTP 502 ran out of cu'));
+      server.getTxHistory({ limit: 20 }, function(err) {
+        should.exist(err);
+        err.message.should.contain('ran out of cu');
+        done();
+      });
+    });
+
     it('should get tx history from cache and bc mixed', function(done) {
       var _cache = Defaults.CONFIRMATIONS_TO_START_CACHING;
       Defaults.CONFIRMATIONS_TO_START_CACHING = 10;
@@ -392,7 +422,21 @@ describe('History', function() {
     });
 
     describe('Stream cache', () => {
-      it('should not stream cache on first call', function(done) {
+      it('should not store the stream cache of a first load whose history cache write failed', function(done) {
+        helpers.stubHistory(50, BCHEIGHT);
+        const store = sinon.stub(server.storage, 'storeTxHistoryCacheV8').callsFake((...args) => args[4](new Error('disk full')));
+        server.getTxHistory({ limit: 20 }, function(err) {
+          store.restore();
+          should.exist(err);
+          server.storage.getTxHistoryStreamV8(server.walletId, (err, stream) => {
+            should.not.exist(err);
+            should.not.exist(stream);
+            done();
+          });
+        });
+      });
+
+      it('should store the stream cache on the first call and use it for the next pages', function(done) {
         this.timeout(10000);
         var _cache = Defaults.CONFIRMATIONS_TO_START_CACHING;
         Defaults.CONFIRMATIONS_TO_START_CACHING = 10;
@@ -414,7 +458,6 @@ describe('History', function() {
           let i = limit;
           let cont = true;
 
-          let x = false;
           async.doWhilst(
             next => {
               server.getTxHistory({ skip: i, limit: limit }, function(err, txs, fromCache, useStream) {
@@ -424,8 +467,8 @@ describe('History', function() {
                   return next();
                 }
                 fromCache.should.equal(true);
-                useStream.should.equal(x);
-                x = true;
+                // the first call already stored the stream cache, so no page goes to the explorer again
+                useStream.should.equal(true);
                 should.exist(txs);
                 allTxs = allTxs.concat(txs);
                 _.first(txs).id.should.equal('id' + i);
@@ -977,13 +1020,14 @@ describe('History', function() {
           txid: '0xf992febe3257518c00c09ae96cafe988dfe5b625bbf5515b679807f650f58e88',
           confirmations: 0,
           blockheight: 8999242,
-          fees: 1100740000000000,
+          // EVM amounts are wei, returned as exact decimal strings
+          fees: '1100740000000000',
           time: 1574695599,
           size: undefined,
-          amount: 0,
+          amount: '0',
           action: 'sent',
           addressTo: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
-          outputs: [{ address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: 0 }],
+          outputs: [{ address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48', amount: '0' }],
           internal: [],
           dust: false,
           abiType:
@@ -998,6 +1042,35 @@ describe('History', function() {
           receipt: undefined,
           lowFees: false
         });
+        done();
+      });
+    });
+
+    it('should keep EVM history amounts and fees exact beyond Number.MAX_SAFE_INTEGER', function(done) {
+      const base = Object.assign({}, TestData.historyETH[1], { chain: 'ETH', network: 'testnet' });
+      helpers.stubHistory(null, null, [
+        Object.assign({}, base, {
+          txid: '0xreceive',
+          satoshis: '11403428223533225922559',
+          fee: '7000000000000000001'
+        }),
+        Object.assign({}, base, {
+          txid: '0xsend',
+          category: 'send',
+          address: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48',
+          satoshis: '-9007199254740993',
+          fee: 0
+        })
+      ]);
+
+      server.getTxHistory({}, function(err, txs) {
+        should.not.exist(err);
+        const byTxid = _.keyBy(txs, 'txid');
+        byTxid['0xreceive'].amount.should.equal('11403428223533225922559');
+        byTxid['0xreceive'].fees.should.equal('7000000000000000001');
+        byTxid['0xreceive'].outputs[0].amount.should.equal('11403428223533225922559');
+        byTxid['0xsend'].amount.should.equal('9007199254740993');
+        byTxid['0xsend'].fees.should.equal('0');
         done();
       });
     });

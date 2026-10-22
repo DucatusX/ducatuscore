@@ -8,6 +8,7 @@ import { Validation } from '@ducatuscore/crypto';
 import { BlockChainExplorer } from './blockchainexplorer';
 import { V8 } from './blockchainexplorers/v8';
 import { ChainService } from './chain/index';
+import { toWeiBN } from './chain/weiamount';
 import { Common } from './common';
 import { getNodeConfig } from './config/config';
 import { ClientError } from './errors/clienterror';
@@ -3319,6 +3320,19 @@ export class WalletService implements IWalletService {
   _normalizeTxHistory(walletId, txs: any[], dustThreshold, bcHeight, cb) {
     if (_.isEmpty(txs)) return cb(null, txs);
 
+    // EVM amounts are wei and stay exact decimal strings (see chain/weiamount.ts): a JS number cannot
+    // hold them, and a lodash sum would concatenate them. UTXO amounts stay numbers.
+    const isEvm = tx => _.includes(_.values(Constants.EVM_CHAINS), String(tx.chain || '').toLowerCase());
+    const absAmount = (tx, value) => (isEvm(tx) ? toWeiBN(value).abs().toString() : Math.abs(value));
+    const sumAmounts = (tx, items) =>
+      isEvm(tx)
+        ? _.reduce(items, (sum, item: any) => sum.add(toWeiBN(item.amount).abs()), toWeiBN(0)).toString()
+        : Math.abs(_.sumBy(items, 'amount'));
+    const isBelowDust = (tx, value) =>
+      isEvm(tx) ? toWeiBN(value).abs().lt(toWeiBN(dustThreshold)) : value < dustThreshold;
+    // '0' is a truthy string, so `a || b` does not skip a zero EVM amount
+    const firstNonZero = (...values) => _.find(values, value => !!value && Number(value) !== 0) || _.last(values);
+
     // console.log('[server.js.2915:txs:] IN NORMALIZE',txs); //TODO
     const now = Math.floor(Date.now() / 1000);
 
@@ -3337,11 +3351,11 @@ export class WalletService implements IWalletService {
       //      return false;
 
       if (tx.category == 'receive') {
-        if (tx.satoshis < dustThreshold) return false;
+        if (isBelowDust(tx, tx.satoshis)) return false;
 
         const output = {
           address: tx.address,
-          amount: Math.abs(tx.satoshis)
+          amount: absAmount(tx, tx.satoshis)
         };
         if (seenReceive[tx.txid]) {
           seenReceive[tx.txid].outputs.push(output);
@@ -3355,7 +3369,7 @@ export class WalletService implements IWalletService {
       if (tx.category == 'send') {
         const output = {
           address: tx.address,
-          amount: Math.abs(tx.satoshis)
+          amount: absAmount(tx, tx.satoshis)
         };
         if (seenSend[tx.txid]) {
           seenSend[tx.txid].outputs.push(output);
@@ -3371,7 +3385,7 @@ export class WalletService implements IWalletService {
       if (tx.category == 'move' && !indexedSend[tx.txid]) {
         const output = {
           address: tx.address,
-          amount: Math.abs(tx.satoshis)
+          amount: absAmount(tx, tx.satoshis)
         };
 
         if (moves[tx.txid]) {
@@ -3425,10 +3439,18 @@ export class WalletService implements IWalletService {
             txid: tx.txid,
             confirmations: c,
             blockheight: tx.height > 0 ? tx.height : null,
-            fees: tx.fee || (indexedFee[tx.txid] ? Math.abs(indexedFee[tx.txid].satoshis) : null),
+            // A zero fee is real (gasless BSC transactions have gasPrice 0), only a missing one falls back.
+            fees:
+              isEvm(tx) && tx.fee != null && tx.fee !== ''
+                ? absAmount(tx, tx.fee)
+                : _.isFinite(tx.fee) && tx.fee >= 0
+                  ? tx.fee
+                  : indexedFee[tx.txid]
+                    ? Math.abs(indexedFee[tx.txid].satoshis)
+                    : null,
             time: t,
             size: tx.size,
-            amount: 0,
+            amount: isEvm(tx) ? '0' : 0,
             action: undefined,
             addressTo: undefined,
             outputs: undefined,
@@ -3447,19 +3469,24 @@ export class WalletService implements IWalletService {
           switch (tx.category) {
             case 'send':
               ret.action = 'sent';
-              ret.amount = Math.abs(_.sumBy(tx.outputs, 'amount')) || Math.abs(tx.satoshis);
+              ret.amount = firstNonZero(sumAmounts(tx, tx.outputs), absAmount(tx, tx.satoshis));
               ret.addressTo = tx.outputs ? tx.outputs[0].address : null;
               ret.outputs = tx.outputs;
               break;
             case 'receive':
               ret.action = 'received';
               ret.outputs = tx.outputs;
-              ret.amount = Math.abs(_.sumBy(tx.effects, 'amount')) || Math.abs(tx.satoshis);
-              ret.dust = ret.amount < dustThreshold;
+              // A UTXO tx can pay several wallet addresses: their outputs are merged above, sum them.
+              ret.amount = firstNonZero(
+                sumAmounts(tx, tx.effects),
+                sumAmounts(tx, tx.outputs),
+                absAmount(tx, tx.satoshis)
+              );
+              ret.dust = isBelowDust(tx, ret.amount);
               break;
             case 'move':
               ret.action = 'moved';
-              ret.amount = Math.abs(tx.satoshis);
+              ret.amount = absAmount(tx, tx.satoshis);
               ret.addressTo = tx.outputs && tx.outputs.length ? tx.outputs[0].address : null;
               ret.outputs = tx.outputs;
               break;
@@ -3765,7 +3792,10 @@ export class WalletService implements IWalletService {
           amount: output.amount
         };
         if (proposal.outputs) {
-          const txpOut = proposal.outputs.find(o => o.toAddress === output.address && o.amount === output.amount);
+          // history amounts of EVM txs are wei strings, the txp ones may be numbers
+          const sameAmount = o =>
+            typeof output.amount === 'string' ? toWeiBN(o.amount).eq(toWeiBN(output.amount)) : o.amount === output.amount;
+          const txpOut = proposal.outputs.find(o => o.toAddress === output.address && sameAmount(o));
           output.message = txpOut ? txpOut.message : null;
         }
       });
@@ -4100,6 +4130,7 @@ export class WalletService implements IWalletService {
       fromBc;
     let streamData;
     let streamKey;
+    let firstLoadStream;
 
     let walletCacheKey = wallet.id;
     if (opts.tokenAddress) {
@@ -4110,6 +4141,11 @@ export class WalletService implements IWalletService {
     if (opts.multisigContractAddress) {
       wallet.multisigContractAddress = opts.multisigContractAddress;
       walletCacheKey = `${wallet.id}-${opts.multisigContractAddress}`;
+    }
+
+    let CONFIRMATIONS_TO_START_CACHING = Defaults.CONFIRMATIONS_TO_START_CACHING;
+    if (Constants.CONFIRMATIONS_TO_START_CACHING[wallet.chain] != null) {
+      CONFIRMATIONS_TO_START_CACHING = Constants.CONFIRMATIONS_TO_START_CACHING[wallet.chain];
     }
 
     async.series(
@@ -4155,6 +4191,12 @@ export class WalletService implements IWalletService {
         next => {
           if (streamData) {
             lastTxs = streamData;
+            // The stream was stored with the confirmations of that moment, refresh them like the cached txs.
+            _.each(lastTxs, tx => {
+              if (tx.blockheight > 0 && bcHeight >= tx.blockheight) {
+                tx.confirmations = bcHeight - tx.blockheight + 1;
+              }
+            });
             return next();
           }
 
@@ -4162,7 +4204,16 @@ export class WalletService implements IWalletService {
           logger.debug(' ########### GET HISTORY v8 startBlock/bcH] %o', { startBlock, bcHeight });
 
           bc.getTransactions(wallet, startBlock, (err, txs) => {
-            if (err) return cb(err);
+            if (err) {
+              // The node may fail to get the latest txs (e.g. its BSC indexer is out of quota). With a cached
+              // history, serve that instead of failing the whole request: only the newest txs are missing.
+              if (cacheStatus.tipTxId) {
+                this.logw(`Could not get new txs from the blockchain explorer, serving the cached history: ${err}`);
+                lastTxs = [];
+                return next();
+              }
+              return cb(err);
+            }
             const dustThreshold = ChainService.getDustAmountValue(wallet.chain);
             this._normalizeTxHistory(walletCacheKey, txs, dustThreshold, bcHeight, (err, inTxs: any[]) => {
               if (err) return cb(err);
@@ -4182,6 +4233,11 @@ export class WalletService implements IWalletService {
               }
 
               lastTxs = inTxs;
+
+              // First load: the confirmed txs are written to the history cache below, the rest goes to the
+              // stream cache. Without it, scrolling right after the first load would fetch the history from
+              // the explorer once more. It is stored only after the history cache, see the last step.
+              firstLoadStream = _.filter(inTxs, tx => tx.confirmations < CONFIRMATIONS_TO_START_CACHING);
               return next();
             });
           });
@@ -4260,11 +4316,6 @@ export class WalletService implements IWalletService {
           // We have now TXs from 'tipHeight` to end in `lastTxs`.
           // Store hard confirmed TXs
           // confirmations here is bcHeight - tip + 1, so OK.
-          let CONFIRMATIONS_TO_START_CACHING = Defaults.CONFIRMATIONS_TO_START_CACHING;
-          if (Constants.CONFIRMATIONS_TO_START_CACHING[wallet.chain] != null) {
-            CONFIRMATIONS_TO_START_CACHING = Constants.CONFIRMATIONS_TO_START_CACHING[wallet.chain];
-          }
-
           txsToCache = _.filter(lastTxs, i => {
             if (i.confirmations < CONFIRMATIONS_TO_START_CACHING) {
               return false;
@@ -4275,12 +4326,26 @@ export class WalletService implements IWalletService {
           });
 
           logger.debug(`Found ${lastTxs.length} new txs. Caching ${txsToCache.length}`);
+
+          // A stream cache saved while the history cache write failed would point at a history that is
+          // not there: scrolling would then skip the confirmed txs. So it goes in only after that write.
+          const storeFirstLoadStream = err => {
+            if (err || !firstLoadStream) return next(err);
+            logger.info(`Storing stream cache for ${walletCacheKey} on first load: ${firstLoadStream.length} txs`);
+            return this.storage.storeTxHistoryStreamV8(walletCacheKey, streamKey, firstLoadStream, next);
+          };
           if (!txsToCache.length) {
-            return next();
+            return storeFirstLoadStream(null);
           }
 
           const updateHeight = bcHeight - CONFIRMATIONS_TO_START_CACHING;
-          this.storage.storeTxHistoryCacheV8(walletCacheKey, cacheStatus.tipIndex, txsToCache, updateHeight, next);
+          this.storage.storeTxHistoryCacheV8(
+            walletCacheKey,
+            cacheStatus.tipIndex,
+            txsToCache,
+            updateHeight,
+            storeFirstLoadStream
+          );
         }
       ],
       err => {
@@ -4332,7 +4397,13 @@ export class WalletService implements IWalletService {
       async.waterfall(
         [
           next => {
-            this.getTxHistoryV8(bc, wallet, opts, from, opts.limit, next);
+            // Concurrent first loads (the app opens a wallet with parallel requests) would both fetch the
+            // whole history from the explorer and both append it to the history cache, storing every tx
+            // twice. Serialize them: the second one then finds the cache and only fetches new blocks.
+            const historyKey = `txhistory-${wallet.id}-${opts.tokenAddress || opts.multisigContractAddress || ''}`;
+            this.lock.runLocked(historyKey, { waitTime: Defaults.LOCK_EXE_TIME }, next, done =>
+              this.getTxHistoryV8(bc, wallet, opts, from, opts.limit, done)
+            );
           },
           (txs: { items: Array<{ time: number }> }, next) => {
             if (!txs || _.isEmpty(txs.items)) {

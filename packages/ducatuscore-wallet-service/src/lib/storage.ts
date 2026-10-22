@@ -17,6 +17,7 @@ import {
   TxProposal,
   Wallet
 } from './model';
+import { exponentialBackoff, isPermanentConnectionError } from './retry';
 import { Rate } from './fiatrateproviders';
 import { DucConvertRequest } from 'src/lib/model/duc-convert-request';
 
@@ -187,18 +188,52 @@ export class Storage {
       return cb(new Error('No dbname at config.'));
     }
 
-    mongodb.MongoClient.connect(config.uri, { useUnifiedTopology: true }, (err, client) => {
-      if (err) {
-        logger.error('Unable to connect to the mongoDB. Check the credentials.');
-        return cb(err);
+    // Keeps retrying instead of failing: the callers treat a connection error as fatal and the process
+    // would crash-loop while the database is down. Once connected, the unified topology restores the
+    // connection after an outage by itself.
+    const tryConnect = (attempt: number) => {
+      mongodb.MongoClient.connect(
+        config.uri,
+        { useUnifiedTopology: true, serverSelectionTimeoutMS: 10 * 1000 } as mongodb.MongoClientOptions,
+        (err, client) => {
+          if (err && isPermanentConnectionError(err)) {
+            logger.error(`Unable to connect to the mongoDB, not retrying (check the credentials/URI): ${err.message}`);
+            return cb(err);
+          }
+          if (err) {
+            const delay = exponentialBackoff(attempt);
+            logger.error(
+              `Unable to connect to the mongoDB (attempt ${attempt + 1}), retrying in ${(delay / 1000).toFixed(1)}s: ${
+                err.message
+              }`
+            );
+            return setTimeout(() => tryConnect(attempt + 1), delay);
+          }
+          this.db = client.db(config.dbname);
+          this.client = client;
+          Storage.watchConnection(client);
+
+          logger.info(`Connection established to db: ${config.uri}`);
+
+          Storage.createIndexes(this.db);
+          return cb();
+        }
+      );
+    };
+    tryConnect(0);
+  }
+
+  // Logs outages of an established connection; the driver restores it on its own.
+  static watchConnection(client: mongodb.MongoClient) {
+    let available = true;
+    client.on('serverDescriptionChanged', event => {
+      const isAvailable = event.newDescription.type !== 'Unknown';
+      if (available && !isAvailable) {
+        logger.error(`Lost connection to mongoDB ${event.address}, waiting for it to come back`);
+      } else if (!available && isAvailable) {
+        logger.info(`Connection to mongoDB ${event.address} restored`);
       }
-      this.db = client.db(config.dbname);
-      this.client = client;
-
-      logger.info(`Connection established to db: ${config.uri}`);
-
-      Storage.createIndexes(this.db);
-      return cb();
+      available = isAvailable;
     });
   }
 
@@ -1181,15 +1216,10 @@ export class Storage {
         }
 
         // console.log('STORING [storage.js.804:at:]',pos, item.blockheight);
-        this.db.collection(collections.CACHE).insertOne(
-          {
-            walletId,
-            type: 'historyCacheV8',
-            key: pos,
-            tx: item
-          },
-          next
-        );
+        // Upsert by position, so that storing the same page twice cannot duplicate cached txs.
+        this.db
+          .collection(collections.CACHE)
+          .updateOne({ walletId, type: 'historyCacheV8', key: pos }, { $set: { tx: item } }, { upsert: true }, next);
       },
       err => {
         if (err) return cb(err);

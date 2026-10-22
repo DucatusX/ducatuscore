@@ -8,6 +8,7 @@ import { Storage } from '../services/storage';
 import { Worker } from '../services/worker';
 import parseArgv from '../utils/parseArgv';
 import '../utils/polyfills';
+import { isDatabaseConnectionError } from '../utils/retry';
 // require('heapdump');
 let args = parseArgv([], ['DEBUG']);
 const services: Array<any> = [];
@@ -15,6 +16,10 @@ const services: Array<any> = [];
 export const FullClusteredWorker = async () => {
   process.on('unhandledRejection', (error: any) => {
     console.error('Unhandled Rejection at:', error.stack || error);
+    // The database being down is not fatal: storage reconnects and the failed work is retried later.
+    if (isDatabaseConnectionError(error)) {
+      return;
+    }
     stop();
   });
   process.on('SIGTERM', stop);

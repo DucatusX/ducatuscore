@@ -328,6 +328,10 @@ export class V8 {
     if (_.isNumber(startBlock)) opts.startBlock = startBlock;
 
     const txStream = client.listTransactions(opts);
+    let statusCode;
+    txStream.on('response', res => {
+      statusCode = res.statusCode;
+    });
     txStream.on('data', raw => {
       acum = acum + raw.toString();
     });
@@ -337,8 +341,15 @@ export class V8 {
         return;
       }
 
+      // An error response (e.g. 502 when the node's indexer is down) is a text body, not a tx list.
+      if (statusCode && statusCode !== 200) {
+        logger.error(`v8 error: HTTP ${statusCode} ${acum}`);
+        return cb(new Error(`Could not get transactions from the node: HTTP ${statusCode} ${acum}`.trim()));
+      }
+
       const txs = [],
         unconf = [];
+      let parseError;
       _.each(acum.split(/\r?\n/), rawTx => {
         if (!rawTx) return;
 
@@ -347,7 +358,9 @@ export class V8 {
           tx = JSON.parse(rawTx);
         } catch (e) {
           logger.error('v8 error at JSON.parse:' + e + ' Parsing:' + rawTx + ':');
-          return cb(e);
+          // stop here: returning cb(e) from the iteratee alone let the loop finish and call cb a second time
+          parseError = e;
+          return false;
         }
         // v8 field name differences
         if (tx.value) tx.amount = tx.satoshis / 1e8;
@@ -355,6 +368,9 @@ export class V8 {
         if (tx.height >= 0) txs.push(tx);
         else if (tx.height >= -2) unconf.push(tx);
       });
+      if (parseError) {
+        return cb(parseError);
+      }
       console.timeEnd(perfKey);
       // blockTime on unconf is 'seenTime';
       return cb(null, _.flatten(_.orderBy(unconf, 'blockTime', 'desc').concat(txs.reverse())));

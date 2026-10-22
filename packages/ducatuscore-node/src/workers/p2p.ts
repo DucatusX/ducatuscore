@@ -6,12 +6,17 @@ import { Event } from '../services/event';
 import { P2P } from '../services/p2p';
 import { Storage } from '../services/storage';
 import '../utils/polyfills';
+import { isDatabaseConnectionError } from '../utils/retry';
 // require('heapdump');
 const services: Array<any> = [];
 
 export const P2pWorker = async () => {
   process.on('unhandledRejection', (error: any) => {
     console.error('Unhandled Rejection at:', error.stack || error);
+    // The database being down is not fatal: storage reconnects and the failed work is retried later.
+    if (isDatabaseConnectionError(error)) {
+      return;
+    }
     stop();
   });
   process.on('SIGTERM', stop);

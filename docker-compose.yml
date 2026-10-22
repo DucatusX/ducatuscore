@@ -1,79 +1,77 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "250m"
+    max-file: "4"
+
 services:
   node-db:
     image: mongo:5.0
     restart: always
     volumes:
-      - /mnt/node/data/node_db:/data/db
+      - ${NODE_DB_VOLUME:-./.data/node_db}:/data/db
     networks:
-      - ducatuscore-network
-    ports:
-      - 127.0.0.1:27017:27017
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "250m"
-        max-file: "4"
+      - ducatuscore-node
+    logging: *default-logging
 
   dws-db:
     image: mongo:5.0
     restart: always
     volumes:
-      - /data/dws_db:/data/db
+      - ${DWS_DB_VOLUME:-./.data/dws_db}:/data/db
     networks:
-      - ducatuscore-network
-    command: mongod --port 27001
-    ports:
-      - 127.0.0.1:27001:27001
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "250m"
-        max-file: "4"
+      - ducatuscore-dws
+    logging: *default-logging
 
   node:
     build: .
     restart: always
     image: ducatuscore-node
     networks:
-      - ducatuscore-network
+      - ducatuscore-node
+      - ducatuscore-api
     ports:
-      - 8100:8100
-      - 3001:3000
+      - 127.0.0.1:${NODE_PORT:-3001}:3000
     env_file: .env
     environment:
+      # port the app listens on inside the container; NODE_PORT / DWS_PORT (.env) set only the host side of `ports`
+      - APP_PORT=3000
       - DB_HOST=node-db
     working_dir: /ducatuscore/packages/ducatuscore-node
     entrypoint: ["yarn", "start"]
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "250m"
-        max-file: "4"
+    logging: *default-logging
 
   dws:
     build: .
     restart: always
     image: ducatuscore-dws
     networks:
-      - ducatuscore-network
+      - ducatuscore-dws
+      - ducatuscore-api
     ports:
-      - 3233:3233
+      - 127.0.0.1:${DWS_PORT:-3233}:3000
     env_file: .env
     environment:
+      # port the app listens on inside the container; NODE_PORT / DWS_PORT (.env) set only the host side of `ports`
+      - APP_PORT=3000
       - DWS_DB_HOST=dws-db
-      - DWS_DB_PORT=27001
+      - DWS_DB_PORT=27017
+      # internal message broker between the DWS processes of this container, not configurable
+      - MSG_HOST=localhost
+      - MSG_PORT=3381
       - DUC_NODE_URL=${DUC_NODE_URL:-node:3000}
       - DUCX_NODE_URL=${DUCX_NODE_URL:-node:3000}
     working_dir: /ducatuscore/packages/ducatuscore-wallet-service
     entrypoint: ["yarn", "start"]
     stdin_open: true
     tty: true
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "250m"
-        max-file: "4"
+    logging: *default-logging
 
 networks:
-  ducatuscore-network:
+  ducatuscore-node:
+    driver: bridge
+  ducatuscore-dws:
+    driver: bridge
+  # node <-> dws only, so that each service still reaches just its own database
+  ducatuscore-api:
     driver: bridge

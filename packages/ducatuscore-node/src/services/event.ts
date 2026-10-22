@@ -2,9 +2,15 @@ import { EventEmitter } from 'events';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
 import { BlockEvent, CoinEvent, EventModel, EventStorage, TxEvent } from '../models/events';
+import { exponentialBackoff } from '../utils/retry';
 import { Config, ConfigService } from './config';
 import { StorageService } from './storage';
 import { Storage } from './storage';
+
+type EventCursor = ReturnType<EventModel['getTxTail']>;
+interface EventDoc {
+  payload: BlockEvent | TxEvent | CoinEvent;
+}
 
 @LoggifyClass
 export class EventService {
@@ -54,53 +60,66 @@ export class EventService {
     let lastTxUpdate = new Date();
     let lastAddressTxUpdate = new Date();
 
-    const retryTxCursor = async () => {
-      const txCursor = this.eventModel.getTxTail(lastTxUpdate);
-      while (!this.stopped && (await txCursor.hasNext())) {
-        const txEvent = await txCursor.next();
-        if (txEvent) {
-          const tx = txEvent.payload as TxEvent;
-          this.txEvent.emit('tx', tx);
-          lastTxUpdate = new Date();
+    // Re-reads a tail every 100ms. While the database is unreachable the read fails, and instead of an
+    // unhandled rejection (which stops the worker) it is retried with exponential backoff. The cursor is
+    // closed in any case: it is opened with noCursorTimeout, so the server would never reap an abandoned one.
+    const poll = (name: string, openTail: () => EventCursor, onEvent: (event: EventDoc) => void) => {
+      let failures = 0;
+      const run = async () => {
+        let delay = 100;
+        let cursor: EventCursor | undefined;
+        try {
+          cursor = openTail();
+          while (!this.stopped && (await cursor.hasNext())) {
+            const event = await cursor.next();
+            if (event) {
+              onEvent(event);
+            }
+          }
+          failures = 0;
+        } catch (err: any) {
+          delay = exponentialBackoff(failures++);
+          logger.error(
+            `Event service: reading ${name} events failed, retrying in ${(delay / 1000).toFixed(1)}s: ${err.message}`
+          );
+        } finally {
+          if (cursor) {
+            cursor.close().catch(() => undefined);
+          }
         }
-      }
-      if (!this.stopped) {
-        setTimeout(retryTxCursor, 100);
-      }
+        if (!this.stopped) {
+          setTimeout(run, delay);
+        }
+      };
+      run();
     };
-    retryTxCursor();
 
-    const retryBlockCursor = async () => {
-      const blockCursor = this.eventModel.getBlockTail(lastBlockUpdate);
-      while (!this.stopped && (await blockCursor.hasNext())) {
-        const blockEvent = await blockCursor.next();
-        if (blockEvent) {
-          const block = blockEvent.payload as BlockEvent;
-          this.blockEvent.emit('block', block);
-          lastBlockUpdate = new Date();
-        }
+    poll(
+      'tx',
+      () => this.eventModel.getTxTail(lastTxUpdate),
+      event => {
+        this.txEvent.emit('tx', event.payload as TxEvent);
+        lastTxUpdate = new Date();
       }
-      if (!this.stopped) {
-        setTimeout(retryBlockCursor, 100);
-      }
-    };
-    retryBlockCursor();
+    );
 
-    const retryAddressTxCursor = async () => {
-      const addressTxCursor = this.eventModel.getCoinTail(lastAddressTxUpdate);
-      while (!this.stopped && (await addressTxCursor.hasNext())) {
-        const addressTx = await addressTxCursor.next();
-        if (addressTx) {
-          const addressCoin = addressTx.payload as CoinEvent;
-          this.addressCoinEvent.emit('coin', addressCoin);
-          lastAddressTxUpdate = new Date();
-        }
+    poll(
+      'block',
+      () => this.eventModel.getBlockTail(lastBlockUpdate),
+      event => {
+        this.blockEvent.emit('block', event.payload as BlockEvent);
+        lastBlockUpdate = new Date();
       }
-      if (!this.stopped) {
-        setTimeout(retryAddressTxCursor, 100);
+    );
+
+    poll(
+      'coin',
+      () => this.eventModel.getCoinTail(lastAddressTxUpdate),
+      event => {
+        this.addressCoinEvent.emit('coin', event.payload as CoinEvent);
+        lastAddressTxUpdate = new Date();
       }
-    };
-    retryAddressTxCursor();
+    );
   }
 
   async signalBlock(block: BlockEvent) {

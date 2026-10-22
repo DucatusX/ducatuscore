@@ -2,7 +2,7 @@ import { ObjectId } from 'bson';
 import { EventEmitter } from 'events';
 import { Request, Response } from 'express';
 import { ObjectID } from 'mongodb';
-import { Cursor, Db, MongoClient } from 'mongodb';
+import { Cursor, Db, MongoClient, MongoClientOptions } from 'mongodb';
 import { Readable } from 'stream';
 import { LoggifyClass } from '../decorators/Loggify';
 import logger from '../logger';
@@ -11,6 +11,7 @@ import { MongoBound } from '../models/base';
 import { ConfigType } from '../types/Config';
 import { StreamingFindOptions } from '../types/Query';
 import { TransformableModel } from '../types/TransformableModel';
+import { exponentialBackoff, isPermanentConnectionError } from '../utils/retry';
 import { wait } from '../utils/wait';
 import { Config, ConfigService } from './config';
 
@@ -24,6 +25,9 @@ export class StorageService {
   connection = new EventEmitter();
   configService: ConfigService;
   modelsConnected = new Array<Promise<any>>();
+  private stopping = false;
+  private reconnectTimer?: NodeJS.Timeout;
+  private rejectStart?: (err: Error) => void;
 
   constructor({ configService = Config } = {}) {
     this.configService = configService;
@@ -37,36 +41,86 @@ export class StorageService {
       let auth = dbUser !== '' && dbPass !== '' ? `${dbUser}:${dbPass}@` : '';
       const connectUrl = dbUrl
         ? dbUrl
-        : `mongodb://${auth}${dbHost}:${dbPort}/${dbName}?socketTimeoutMS=3600000&noDelay=true${dbReadPreference ? `?readPreference=${dbReadPreference}` : ''}`;
+        : `mongodb://${auth}${dbHost}:${dbPort}/${dbName}?socketTimeoutMS=3600000&noDelay=true${dbReadPreference ? `&readPreference=${dbReadPreference}` : ''}`;
+      // The unified topology keeps monitoring the server and reconnects by itself after an outage,
+      // the legacy one gives up after 30 attempts and leaves the client dead. The installed typings
+      // predate these options.
+      const connectOptions = {
+        keepAlive: true,
+        poolSize: options.maxPoolSize,
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        serverSelectionTimeoutMS: 10 * 1000
+      } as MongoClientOptions;
       let attemptConnect = async () => {
-        return MongoClient.connect(connectUrl, {
-          keepAlive: true,
-          poolSize: options.maxPoolSize,
-          useNewUrlParser: true
-        });
+        return MongoClient.connect(connectUrl, connectOptions);
       };
-      let attempted = 0;
-      let attemptConnectId = setInterval(async () => {
+      this.stopping = false;
+      const stopped = () => new Error('Storage service stopped before connecting to the database');
+      this.rejectStart = err => {
+        this.rejectStart = undefined;
+        reject(err);
+      };
+      const connectWithRetry = async (attempt: number) => {
+        this.reconnectTimer = undefined;
+        if (this.stopping) {
+          return this.rejectStart && this.rejectStart(stopped());
+        }
         try {
-          this.client = await attemptConnect();
+          const client = await attemptConnect();
+          if (this.stopping) {
+            // stop() was called while this attempt was in flight: do not leave the pool open
+            await client.close();
+            return this.rejectStart && this.rejectStart(stopped());
+          }
+          this.client = client;
+          this.watchConnection(this.client);
           this.db = this.client.db(dbName);
           this.connected = true;
-          clearInterval(attemptConnectId);
           this.connection.emit('CONNECTED');
+          logger.info(`Connected to database${attempt ? ` after ${attempt + 1} attempts` : ''}`);
+          this.rejectStart = undefined;
           resolve(this.client);
         } catch (err: any) {
-          logger.error('%o', err);
-          attempted++;
-          if (attempted > 5) {
-            clearInterval(attemptConnectId);
-            reject(new Error('Failed to connect to database'));
+          if (isPermanentConnectionError(err)) {
+            logger.error(`Failed to connect to database, not retrying: ${err.message}`);
+            return this.rejectStart && this.rejectStart(err);
           }
+          const delay = exponentialBackoff(attempt);
+          logger.error(
+            `Failed to connect to database (attempt ${attempt + 1}), retrying in ${(delay / 1000).toFixed(1)}s: ${err.message}`
+          );
+          this.reconnectTimer = setTimeout(() => connectWithRetry(attempt + 1), delay);
         }
-      }, 5000);
+      };
+      connectWithRetry(0);
+    });
+  }
+
+  // Logs outages of an established connection; the driver restores it on its own.
+  private watchConnection(client: MongoClient) {
+    let available = true;
+    client.on('serverDescriptionChanged', event => {
+      const isAvailable = event.newDescription.type !== 'Unknown';
+      if (available && !isAvailable) {
+        logger.error(`Lost connection to database ${event.address}, waiting for it to come back`);
+      } else if (!available && isAvailable) {
+        logger.info(`Connection to database ${event.address} restored`);
+      }
+      available = isAvailable;
     });
   }
 
   async stop() {
+    this.stopping = true;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = undefined;
+      // start() was waiting for its next attempt, which will now never run: settle it
+      if (this.rejectStart) {
+        this.rejectStart(new Error('Storage service stopped before connecting to the database'));
+      }
+    }
     if (this.client) {
       logger.info('Stopping Storage Service');
       await wait(5000);

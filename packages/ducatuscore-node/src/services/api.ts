@@ -25,7 +25,7 @@ export class ApiService {
     storageService = Storage,
     socketService = Socket
   } = {}) {
-    this.port = Number(process.env.DUCATUSCORE_NODE_HTTP_PORT) || port;
+    this.port = Number(process.env.APP_PORT) || port;
     this.timeout = timeout;
     this.configService = configService;
     this.storageService = storageService;

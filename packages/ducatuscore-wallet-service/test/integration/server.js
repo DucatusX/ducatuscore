@@ -4147,7 +4147,8 @@ describe('Wallet service', function() {
               tx.isRejected().should.equal.false;
               tx.isPending().should.equal.true;
               tx.isTemporary().should.equal.true;
-              tx.amount.should.equal(coinAmount[coin]);
+              // EVM chains return wei amounts as exact decimal strings
+              String(tx.amount).should.equal(String(coinAmount[coin]));
               tx.feePerKb.should.equal(123e2);
               tx.outputs[0].toAddress.should.equal(addressStr);
               tx.outputs[0].amount.should.equal(amount);
@@ -5359,7 +5360,8 @@ describe('Wallet service', function() {
               should.not.exist(err);
               should.exist(tx);
               should.not.exist(tx.changeAddress);
-              tx.amount.should.equal(3 * TO_SAT[coin] - tx.fee);
+              // EVM chains return wei amounts as exact decimal strings, so compare exactly
+              String(tx.amount).should.equal((BigInt(3 * TO_SAT[coin]) - BigInt(tx.fee)).toString());
 
               var t = ChainService.getDucatuscoreTx(tx);
               t.getFee().should.equal(tx.fee);
@@ -11218,14 +11220,14 @@ describe('Wallet service', function() {
             err.messageData.should.deep.equal({ requiredFee: 3999999999999990000 });
             server.getBalance({ tokenAddress: txOpts.tokenAddress }, function(err, tokenBalance) {
               should.not.exist(err);
-              tokenBalance.totalAmount.should.equal(2 * ts);
-              tokenBalance.lockedAmount.should.equal(0);
+              String(tokenBalance.totalAmount).should.equal(String(2 * ts));
+              String(tokenBalance.lockedAmount).should.equal('0');
               txOpts.outputs[0].amount = 1 * ts;
               server.getBalance({}, function(err, ethBalance) {
                 should.not.exist(err);
                 ethBalance.should.not.equal(tokenBalance);
-                ethBalance.totalAmount.should.equal(2000000000000000000);
-                ethBalance.lockedAmount.should.equal(0);
+                String(ethBalance.totalAmount).should.equal('2000000000000000000');
+                String(ethBalance.lockedAmount).should.equal('0');
                 done();
               });
             });
@@ -11282,19 +11284,19 @@ describe('Wallet service', function() {
             should.exist(err);
             err.code.should.equal('INSUFFICIENT_DUCX_FEE');
             err.message.should.equal(
-              'Your linked DucatusX wallet does not have enough DUCX for fee. RequiredFee: 3999999999999989760'
+              'Your linked DucatusX wallet does not have enough DUCX for fee. RequiredFee: 3999999999999990000'
             );
-            err.messageData.should.deep.equal({ requiredFee: '3999999999999989760' });
+            err.messageData.should.deep.equal({ requiredFee: 3999999999999990000 });
             server.getBalance({ tokenAddress: txOpts.tokenAddress }, function(err, tokenBalance) {
               should.not.exist(err);
-              tokenBalance.totalAmount.should.equal(2 * ts);
-              tokenBalance.lockedAmount.should.equal(0);
+              String(tokenBalance.totalAmount).should.equal(String(2 * ts));
+              String(tokenBalance.lockedAmount).should.equal('0');
               txOpts.outputs[0].amount = 1 * ts;
               server.getBalance({}, function(err, ethBalance) {
                 should.not.exist(err);
                 ethBalance.should.not.equal(tokenBalance);
-                ethBalance.totalAmount.should.equal(2000000000000000000);
-                ethBalance.lockedAmount.should.equal(0);
+                String(ethBalance.totalAmount).should.equal('2000000000000000000');
+                String(ethBalance.lockedAmount).should.equal('0');
                 done();
               });
             });

@@ -8,6 +8,7 @@ import { Libs } from '../../providers/libs';
 import { BaseP2PWorker } from '../../services/p2p';
 import { SpentHeightIndicators } from '../../types/Coin';
 import { BitcoinBlockType, BitcoinHeaderObj, BitcoinTransaction } from '../../types/namespaces/Bitcoin';
+import { exponentialBackoff } from '../../utils/retry';
 import { wait } from '../../utils/wait';
 
 export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
@@ -23,6 +24,7 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
   protected pool: any;
   public events: EventEmitter;
   public isSyncing: boolean;
+  private syncFailures = 0;
   constructor({ chain, network, chainConfig, blockModel = BitcoinBlockStorage }) {
     super({ chain, network, chainConfig, blockModel });
     this.blockModel = blockModel;
@@ -257,6 +259,29 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
       return false;
     }
     this.isSyncing = true;
+    try {
+      const done = await this.syncBlocks();
+      this.syncFailures = 0;
+      return done;
+    } catch (err) {
+      // The reads around the block loop hit the database and the peer. Without this the `isSyncing`
+      // flag stays set after such an error (e.g. the database is down) and sync never runs again.
+      this.isSyncing = false;
+      // stopping closes the database under a running sync: that error must not start a retry loop
+      if (this.stopping) {
+        return false;
+      }
+      const delay = exponentialBackoff(this.syncFailures++);
+      logger.error(
+        `${timestamp()} | Error syncing | Chain: ${this.chain} | Network: ${this.network} | retry in ${delay} ms | %o`,
+        err
+      );
+      await wait(delay);
+      return this.stopping ? false : this.sync();
+    }
+  }
+
+  private async syncBlocks() {
     const { chain, chainConfig, network } = this;
     const { parentChain, forkHeight } = chainConfig;
     const state = await StateStorage.collection.findOne({});
@@ -285,39 +310,35 @@ export class BitcoinP2PWorker extends BaseP2PWorker<IBtcBlock> {
       const startingTime = Date.now();
       let lastLog = startingTime;
       logger.info(`${timestamp()} | Syncing ${headers.length} blocks | Chain: ${chain} | Network: ${network}`);
+      // errors go up to sync(), which retries with backoff and stops retrying once the worker stops
       for (const header of headers) {
-        try {
-          const block = await this.getBlock(header.hash);
-          await this.processBlock(block);
-          currentHeight++;
-          const now = Date.now();
-          const oneSecond = 1000;
-          if (now - lastLog > oneSecond) {
-            const blocksProcessed = currentHeight - startingHeight;
-            const elapsedMinutes = (now - startingTime) / (60 * oneSecond);
-            logger.info(
-              `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
-                .toFixed(2)
-                .padStart(8)} blocks/min | Height: ${currentHeight}`
-            );
-            lastLog = now;
-          }
-        } catch (err) {
-          logger.error(`${timestamp()} | Error syncing | Chain: ${chain} | Network: ${network} | %o`, err);
-          this.isSyncing = false;
-          return this.sync();
+        const block = await this.getBlock(header.hash);
+        await this.processBlock(block);
+        currentHeight++;
+        const now = Date.now();
+        const oneSecond = 1000;
+        if (now - lastLog > oneSecond) {
+          const blocksProcessed = currentHeight - startingHeight;
+          const elapsedMinutes = (now - startingTime) / (60 * oneSecond);
+          logger.info(
+            `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
+              .toFixed(2)
+              .padStart(8)} blocks/min | Height: ${currentHeight}`
+          );
+          lastLog = now;
         }
       }
       headers = await getHeaders();
     }
 
     logger.info(`${timestamp()} | Sync completed | Chain: ${chain} | Network: ${network}`);
-    this.isSyncing = false;
     await StateStorage.collection.findOneAndUpdate(
       {},
       { $addToSet: { initialSyncComplete: `${chain}:${network}` } },
       { upsert: true }
     );
+    // cleared only after the last write: if it fails, sync() retries without a second sync running meanwhile
+    this.isSyncing = false;
     this.events.emit('SYNCDONE');
     return true;
   }

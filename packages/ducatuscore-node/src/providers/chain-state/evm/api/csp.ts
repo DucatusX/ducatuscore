@@ -606,40 +606,46 @@ export class BaseEVMStateProvider extends InternalStateProvider implements IChai
         }
       }
 
-      const addressBatchLC = addressBatch.map(address => address.toLowerCase());
-
-      await EVMTransactionStorage.collection.updateMany(
-        {
-          $or: [
-            { chain, network, from: { $in: addressBatch } },
-            { chain, network, to: { $in: addressBatch } },
-            { chain, network, 'internal.action.to': { $in: addressBatchLC } },
-            { chain, network, 'calls.to': { $in: addressBatchLC } },
-            {
-              chain,
-              network,
-              'calls.abiType.type': 'ERC20',
-              'calls.abiType.name': { $in: ['transfer', 'transferFrom'] },
-              'calls.abiType.params.type': 'address',
-              'calls.abiType.params.value': { $in: addressBatchLC }
-            },
-            {
-              chain,
-              network,
-              'abiType.params.0.value': { $in: addressBatchLC },
-              'abiType.type': 'ERC20',
-              'abiType.name': 'transfer'
-            }
-          ]
-        },
-        { $addToSet: { wallets: params.wallet._id } }
-      );
+      await this.tagWalletTransactions(params, addressBatch);
 
       await WalletAddressStorage.collection.updateMany(
         { chain, network, address: { $in: addressBatch }, wallet: params.wallet._id },
         { $set: { processed: true } }
       );
     }
+  }
+
+  // Attaches already synced transactions of newly imported addresses to the wallet.
+  protected async tagWalletTransactions(params: UpdateWalletParams, addressBatch: string[]) {
+    const { chain, network } = params;
+    const addressBatchLC = addressBatch.map(address => address.toLowerCase());
+
+    await EVMTransactionStorage.collection.updateMany(
+      {
+        $or: [
+          { chain, network, from: { $in: addressBatch } },
+          { chain, network, to: { $in: addressBatch } },
+          { chain, network, 'internal.action.to': { $in: addressBatchLC } },
+          { chain, network, 'calls.to': { $in: addressBatchLC } },
+          {
+            chain,
+            network,
+            'calls.abiType.type': 'ERC20',
+            'calls.abiType.name': { $in: ['transfer', 'transferFrom'] },
+            'calls.abiType.params.type': 'address',
+            'calls.abiType.params.value': { $in: addressBatchLC }
+          },
+          {
+            chain,
+            network,
+            'abiType.params.0.value': { $in: addressBatchLC },
+            'abiType.type': 'ERC20',
+            'abiType.name': 'transfer'
+          }
+        ]
+      },
+      { $addToSet: { wallets: params.wallet._id } }
+    );
   }
 
   async getCoinsForTx() {

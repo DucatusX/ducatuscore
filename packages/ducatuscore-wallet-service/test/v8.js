@@ -136,6 +136,53 @@ describe('V8', () => {
       });
     });
 
+    const streamClient = (body, statusCode) =>
+      class {
+        listTransactions() {
+          const stream = new Readable({ read() {} });
+          setImmediate(() => {
+            if (statusCode) stream.emit('response', { statusCode });
+            stream.push(body);
+            stream.push(null);
+          });
+          return stream;
+        }
+      };
+    const explorer = client =>
+      new V8({
+        chain: 'bnb',
+        network: 'livenet',
+        url: 'http://dummy/',
+        apiPrefix: 'dummyPath',
+        userAgent: 'testAgent',
+        addressFormat: null,
+        client
+      });
+
+    it('should fail once on an error response instead of parsing its body', done => {
+      const cb = sinon.spy();
+      explorer(streamClient('NodeReal nr_getTransactionByAddress: HTTP 429', 502)).getTransactions(wallet, 0, cb);
+      setTimeout(() => {
+        cb.callCount.should.equal(1);
+        cb.firstCall.args[0].message.should.contain('HTTP 502');
+        done();
+      }, 50);
+    });
+
+    it('should call back only once when a line is not JSON', done => {
+      const cb = sinon.spy();
+      explorer(streamClient('{"txid":"a","height":1}\nnot json\n{"txid":"b","height":2}\n', 200)).getTransactions(
+        wallet,
+        0,
+        cb
+      );
+      setTimeout(() => {
+        cb.callCount.should.equal(1);
+        should.exist(cb.firstCall.args[0]);
+        done();
+      }, 50);
+    });
+
     it('should handle partial jsonline results', done => {
       class PartialJsonL {
         listTransactions(opts) {

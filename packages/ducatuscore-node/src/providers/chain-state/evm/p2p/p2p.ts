@@ -8,6 +8,7 @@ import { StateStorage } from '../../../../models/state';
 import { BaseP2PWorker } from '../../../../services/p2p';
 import { IEVMNetworkConfig } from '../../../../types/Config';
 import { valueOrDefault } from '../../../../utils/check';
+import { exponentialBackoff } from '../../../../utils/retry';
 import { wait } from '../../../../utils/wait';
 import { BaseEVMStateProvider } from '../api/csp';
 import { EVMBlockModel, EVMBlockStorage } from '../models/block';
@@ -19,6 +20,7 @@ import { MultiThreadSync } from './sync';
 export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
   protected chainConfig: IEVMNetworkConfig;
   protected syncing: boolean;
+  private syncFailures = 0;
   protected initialSyncComplete: boolean;
   protected blockModel: EVMBlockModel;
   protected txModel: EVMTransactionModel;
@@ -262,9 +264,29 @@ export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
       return this.multiThreadSync.sync();
     }
 
+    this.syncing = true;
+    try {
+      const done = await this.syncBlocks();
+      this.syncFailures = 0;
+      return done;
+    } catch (err) {
+      // Not only the block loop can fail: the reads before it hit the database too. Without this the
+      // `syncing` flag stays set after such an error (e.g. the database is down) and sync never runs again.
+      this.syncing = false;
+      // stopping closes the database under a running sync: that error must not start a retry loop
+      if (this.stopping) {
+        return false;
+      }
+      const delay = exponentialBackoff(this.syncFailures++);
+      logger.error(`Error syncing ${this.chain} ${this.network}, retry in ${delay} ms -- %o`, err);
+      await wait(delay);
+      return this.stopping ? false : this.sync();
+    }
+  }
+
+  private async syncBlocks() {
     const { chain, chainConfig, network } = this;
     const { parentChain, forkHeight = 0 } = chainConfig;
-    this.syncing = true;
     const state = await StateStorage.collection.findOne({});
     this.initialSyncComplete =
       state && state.initialSyncComplete && state.initialSyncComplete.includes(`${chain}:${network}`);
@@ -282,57 +304,51 @@ export class EVMP2pWorker extends BaseP2PWorker<IEVMBlock> {
 
     const startHeight = tip ? tip.height : chainConfig.syncStartHeight || 0;
     const startTime = Date.now();
-    try {
-      if (!this.web3?.eth) {
-        logger.error(`Error syncing ${chain} ${network}, web3 error`);
-        await wait(2000);
-        this.syncing = false;
-        return this.sync();
-      }
-
-      let bestBlock = await this.web3!.eth.getBlockNumber();
-      let lastLog = 0;
-      let currentHeight = tip ? tip.height : chainConfig.syncStartHeight || 0;
-      logger.info(`Syncing ${bestBlock - currentHeight} blocks for ${chain} ${network}`);
-      while (currentHeight <= bestBlock) {
-        const block = await this.getBlock(currentHeight);
-        if (!block) {
-          await wait(1000);
-          continue;
-        }
-        const { convertedBlock, convertedTxs } = await this.convertBlock(block);
-        await this.processBlock(convertedBlock, convertedTxs);
-        if (currentHeight === bestBlock) {
-          if (!this.web3?.eth) {
-            logger.error(`Error syncing ${chain} ${network}, web3 error`);
-            await wait(2000);
-            this.syncing = false;
-            return this.sync();
-          }
-
-          bestBlock = await this.web3.eth.getBlockNumber();
-        }
-        tip = await ChainStateProvider.getLocalTip({ chain, network });
-        currentHeight = tip ? tip.height + 1 : 0;
-
-        const oneSecond = 1000;
-        const now = Date.now();
-        if (now - lastLog > oneSecond) {
-          const blocksProcessed = currentHeight - startHeight;
-          const elapsedMinutes = (now - startTime) / (60 * oneSecond);
-          logger.info(
-            `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
-              .toFixed(2)
-              .padStart(8)} blocks/min | Height: ${currentHeight} | Remained blocks: ${Math.max(bestBlock - currentHeight, 0)}`
-          );
-          lastLog = Date.now();
-        }
-      }
-    } catch (err: any) {
-      logger.error(`Error syncing ${chain} ${network} -- %o`, err);
+    // errors go up to sync(), which retries with backoff and stops retrying once the worker stops
+    if (!this.web3?.eth) {
+      logger.error(`Error syncing ${chain} ${network}, web3 error`);
       await wait(2000);
       this.syncing = false;
-      return this.sync();
+      return this.stopping ? false : this.sync();
+    }
+
+    let bestBlock = await this.web3!.eth.getBlockNumber();
+    let lastLog = 0;
+    let currentHeight = tip ? tip.height : chainConfig.syncStartHeight || 0;
+    logger.info(`Syncing ${bestBlock - currentHeight} blocks for ${chain} ${network}`);
+    while (currentHeight <= bestBlock) {
+      const block = await this.getBlock(currentHeight);
+      if (!block) {
+        await wait(1000);
+        continue;
+      }
+      const { convertedBlock, convertedTxs } = await this.convertBlock(block);
+      await this.processBlock(convertedBlock, convertedTxs);
+      if (currentHeight === bestBlock) {
+        if (!this.web3?.eth) {
+          logger.error(`Error syncing ${chain} ${network}, web3 error`);
+          await wait(2000);
+          this.syncing = false;
+          return this.stopping ? false : this.sync();
+        }
+
+        bestBlock = await this.web3.eth.getBlockNumber();
+      }
+      tip = await ChainStateProvider.getLocalTip({ chain, network });
+      currentHeight = tip ? tip.height + 1 : 0;
+
+      const oneSecond = 1000;
+      const now = Date.now();
+      if (now - lastLog > oneSecond) {
+        const blocksProcessed = currentHeight - startHeight;
+        const elapsedMinutes = (now - startTime) / (60 * oneSecond);
+        logger.info(
+          `${timestamp()} | Syncing... | Chain: ${chain} | Network: ${network} |${(blocksProcessed / elapsedMinutes)
+            .toFixed(2)
+            .padStart(8)} blocks/min | Height: ${currentHeight} | Remained blocks: ${Math.max(bestBlock - currentHeight, 0)}`
+        );
+        lastLog = Date.now();
+      }
     }
     logger.info(`${chain}:${network} up to date.`);
     this.syncing = false;

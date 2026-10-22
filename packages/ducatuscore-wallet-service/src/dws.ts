@@ -6,7 +6,7 @@ import logger from './lib/logger';
 import { ExpressApp } from './lib/expressapp';
 
 const config = require('./config');
-const port = process.env.DWS_PORT || config.port || 3232;
+const port = config.port || 3000;
 const cluster = require('cluster');
 const serverModule = config.https ? require('https') : require('http');
 

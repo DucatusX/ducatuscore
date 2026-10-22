@@ -15,7 +15,7 @@ const {
   MSG_HOST,
   FCM_KEY,
   SOCKET_API_KEY,
-  DWS_PORT,
+  APP_PORT,
   MSG_PORT
 } = process.env;
 const ducxNode = DUCX_NODE_URL ? `${DUCX_NODE_PROTOCOL || 'http'}://${DUCX_NODE_URL}` : 'http://localhost:3000';
@@ -28,7 +28,7 @@ const Config = () => {
     ignoreRateLimiter: true,
     basePath: '/dws/api',
     disableLogs: false,
-    port: DWS_PORT,
+    port: APP_PORT,
     exchangerUrl: {
       livenet: EXCHANGER_LIVENET_URL || 'https://www.ducatuscoins.com',
       testnet: EXCHANGER_TESTNET_URL || 'https://devducatus.rocknblock.io'
